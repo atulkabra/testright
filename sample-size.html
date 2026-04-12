@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sample Size Calculator — TestRight Toolkit</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0f11;
+    --surface: #16181c;
+    --surface2: #1e2126;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.14);
+    --text: #f0f0ee;
+    --muted: #7a7f8a;
+    --accent: #c8f060;
+    --accent-dim: rgba(200,240,96,0.12);
+    --accent-border: rgba(200,240,96,0.3);
+    --blue: #60a8f0;
+    --blue-dim: rgba(96,168,240,0.1);
+    --red: #f06060;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 300;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 16px 80px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--text);
+  }
+
+  h1 span { font-weight: 500; }
+
+  .subtitle {
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--muted);
+    letter-spacing: 0.01em;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 740px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+
+  .card-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+
+  @media (max-width: 560px) {
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-family: var(--mono);
+    letter-spacing: 0.03em;
+  }
+
+  .field input, .field select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    appearance: none;
+  }
+
+  .field input:focus, .field select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(200,240,96,0.08);
+  }
+
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a7f8a'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 30px;
+    cursor: pointer;
+  }
+
+  /* Toggle */
+  .toggle-wrap { display: flex; gap: 6px; }
+  .t-btn {
+    flex: 1;
+    padding: 9px 0;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.03em;
+  }
+  .t-btn:hover { border-color: var(--border-hover); color: var(--text); }
+  .t-btn.active {
+    background: var(--accent-dim);
+    border-color: var(--accent-border);
+    color: var(--accent);
+  }
+
+  /* Stat chips */
+  .chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .chip-label { font-size: 11px; color: var(--muted); font-family: var(--mono); letter-spacing: 0.06em; }
+  .chip-val { font-size: 17px; font-weight: 500; font-family: var(--mono); color: var(--text); }
+
+  /* Result */
+  .result-card {
+    background: var(--accent-dim);
+    border: 1px solid var(--accent-border);
+    border-radius: 16px;
+    padding: 28px 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: center;
+  }
+
+  @media (max-width: 480px) { .result-card { grid-template-columns: 1fr; } }
+
+  .result-block { text-align: center; }
+  .result-label { font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+  .result-num { font-size: clamp(36px, 8vw, 52px); font-weight: 500; font-family: var(--mono); color: var(--accent); line-height: 1; }
+  .result-sub { font-size: 12px; color: rgba(200,240,96,0.6); margin-top: 4px; font-family: var(--mono); }
+
+  .divider-line { width: 1px; background: var(--accent-border); align-self: stretch; margin: 0 auto; }
+  @media (max-width: 480px) { .divider-line { display: none; } }
+
+  /* Saving banner */
+  .saving-bar {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .saving-pill {
+    background: var(--blue-dim);
+    color: var(--blue);
+    border: 1px solid rgba(96,168,240,0.25);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  /* Formula */
+  .formula-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 2;
+    word-break: break-all;
+  }
+  .formula-box .hl { color: var(--accent); }
+
+  /* Comparison table */
+  .compare-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 13px; }
+  .compare-table th { text-align: left; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 0 0 10px; font-weight: 400; border-bottom: 1px solid var(--border); }
+  .compare-table td { padding: 10px 0; border-bottom: 1px solid var(--border); color: var(--text); }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table td:not(:first-child) { text-align: right; }
+  .compare-table th:not(:first-child) { text-align: right; }
+  .highlight-row td { color: var(--accent); }
+  .tag { font-size: 10px; padding: 2px 7px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+  .tag-green { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-border); }
+  .tag-blue { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(96,168,240,0.25); }
+
+
+  .site-nav { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 740px; margin-bottom: 48px; }
+  .nav-logo { font-family: var(--mono); font-size: 13px; color: var(--accent); letter-spacing: 0.08em; text-decoration: none; }
+  .nav-back { font-family: var(--mono); font-size: 12px; color: var(--muted); text-decoration: none; letter-spacing: 0.04em; transition: color 0.15s; }
+  .nav-back:hover { color: var(--text); }
+
+  footer {
+    margin-top: 48px;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    opacity: 0.5;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+
+<nav class="site-nav">
+  <a class="nav-logo" href="index.html">Test Right</a>
+  <a class="nav-back" href="index.html">← All tools</a>
+</nav>
+
+<div class="header">
+  <p class="eyebrow">Statistical Testing</p>
+  <h1>Sample Size <span>Calculator</span></h1>
+  <p class="subtitle">Two-proportion Z-test &mdash; one &amp; two sided</p>
+</div>
+
+<div class="container">
+
+  <!-- Inputs -->
+  <div class="card">
+    <p class="card-label">Test configuration</p>
+    <div class="grid-2" style="margin-bottom: 12px;">
+      <div class="field">
+        <label>Test type</label>
+        <div class="toggle-wrap">
+          <button class="t-btn" id="btn-one" onclick="setTails(1)">One-sided</button>
+          <button class="t-btn active" id="btn-two" onclick="setTails(2)">Two-sided</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Significance level (α)</label>
+        <select id="alpha">
+          <option value="0.10">90% confidence (α = 0.10)</option>
+          <option value="0.05" selected>95% confidence (α = 0.05)</option>
+          <option value="0.01">99% confidence (α = 0.01)</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="field">
+        <label>Statistical power</label>
+        <select id="power">
+          <option value="0.80" selected>80%</option>
+          <option value="0.85">85%</option>
+          <option value="0.90">90%</option>
+          <option value="0.95">95%</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Baseline rate (%)</label>
+        <input type="number" id="baseline" value="88.5" min="0.1" max="99.9" step="0.1">
+      </div>
+      <div class="field">
+        <label>MDE — absolute (%)</label>
+        <input type="number" id="mde" value="1.5" min="0.1" max="50" step="0.1">
+      </div>
+    </div>
+  </div>
+
+  <!-- Z values -->
+  <div class="card">
+    <p class="card-label">Parameters</p>
+    <div class="grid-4">
+      <div class="chip"><span class="chip-label">Control p₁</span><span class="chip-val" id="p1-out">88.5%</span></div>
+      <div class="chip"><span class="chip-label">Treatment p₂</span><span class="chip-val" id="p2-out">90.0%</span></div>
+      <div class="chip"><span class="chip-label" id="za-label">Z α/2</span><span class="chip-val" id="z-alpha-out">1.960</span></div>
+      <div class="chip"><span class="chip-label">Z β</span><span class="chip-val" id="z-beta-out">0.842</span></div>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="result-card">
+    <div class="result-block">
+      <p class="result-label">Per group</p>
+      <p class="result-num" id="n-out">—</p>
+      <p class="result-sub" id="test-type-out">two-sided</p>
+    </div>
+    <div class="divider-line"></div>
+    <div class="result-block">
+      <p class="result-label">Total sample</p>
+      <p class="result-num" id="total-out">—</p>
+      <p class="result-sub">both groups combined</p>
+    </div>
+  </div>
+
+  <!-- Saving bar -->
+  <div class="saving-bar" id="saving-bar">
+    <span id="saving-text">—</span>
+  </div>
+
+  <!-- Comparison table -->
+  <div class="card">
+    <p class="card-label">Full comparison</p>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Configuration</th>
+          <th>Z critical</th>
+          <th>Per group</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="compare-body"></tbody>
+    </table>
+  </div>
+
+  <!-- Formula -->
+  <div class="card">
+    <p class="card-label">Formula breakdown</p>
+    <div class="formula-box" id="formula-out"></div>
+  </div>
+
+</div>
+
+<footer>testright toolkit &bull; sample size calculator &bull; <a href='index.html' style='color:var(--muted);'>← all tools</a></footer>
+
+<script>
+let tails = 2;
+
+const Z_ALPHA = { two: { "0.01": 2.576, "0.05": 1.960, "0.10": 1.645 }, one: { "0.01": 2.326, "0.05": 1.645, "0.10": 1.282 } };
+const Z_BETA  = { "0.80": 0.842, "0.85": 1.036, "0.90": 1.282, "0.95": 1.645 };
+
+function setTails(t) {
+  tails = t;
+  document.getElementById("btn-one").classList.toggle("active", t === 1);
+  document.getElementById("btn-two").classList.toggle("active", t === 2);
+  calc();
+}
+
+function calcN(za, zb, p1, p2) {
+  return Math.ceil(Math.pow(za + zb, 2) * (p1*(1-p1) + p2*(1-p2)) / Math.pow(p2 - p1, 2));
+}
+
+function fmt(n) { return n.toLocaleString(); }
+
+function calc() {
+  const alpha   = document.getElementById("alpha").value;
+  const power   = document.getElementById("power").value;
+  const p1      = parseFloat(document.getElementById("baseline").value) / 100;
+  const mde     = parseFloat(document.getElementById("mde").value) / 100;
+  const p2      = p1 + mde;
+
+  if (isNaN(p1) || isNaN(mde) || p2 > 1 || p1 <= 0) return;
+
+  const za  = tails === 2 ? Z_ALPHA.two[alpha] : Z_ALPHA.one[alpha];
+  const zb  = Z_BETA[power];
+  const n   = calcN(za, zb, p1, p2);
+
+  // Update params
+  document.getElementById("p1-out").textContent = (p1*100).toFixed(1) + "%";
+  document.getElementById("p2-out").textContent = (p2*100).toFixed(1) + "%";
+  document.getElementById("z-alpha-out").textContent = za.toFixed(3);
+  document.getElementById("z-beta-out").textContent  = zb.toFixed(3);
+  document.getElementById("za-label").textContent = tails === 2 ? "Z α/2" : "Z α";
+
+  // Result
+  document.getElementById("n-out").textContent = fmt(n);
+  document.getElementById("total-out").textContent = fmt(n * 2);
+  document.getElementById("test-type-out").textContent = tails === 1 ? "one-sided" : "two-sided";
+
+  // Saving bar
+  const nTwo = calcN(Z_ALPHA.two[alpha], zb, p1, p2);
+  const nOne = calcN(Z_ALPHA.one[alpha], zb, p1, p2);
+  const diff = nTwo - nOne;
+  const pct  = ((diff / nTwo) * 100).toFixed(1);
+  const sb   = document.getElementById("saving-bar");
+  const st   = document.getElementById("saving-text");
+
+  if (tails === 1) {
+    sb.innerHTML = `<span class="saving-pill">-${pct}%</span><span>${fmt(diff)} fewer per group vs two-sided &mdash; one-sided saves ${fmt(diff*2)} total</span>`;
+  } else {
+    sb.innerHTML = `<span class="saving-pill">tip</span><span>Switch to one-sided to reduce sample by ${fmt(diff)} per group (${pct}%) if you only care about improvement</span>`;
+  }
+
+  // Comparison table
+  const configs = [
+    { label: "One-sided 90%", sides: 1, a: "0.10", p: power },
+    { label: "One-sided 95%", sides: 1, a: "0.05", p: power },
+    { label: "One-sided 99%", sides: 1, a: "0.01", p: power },
+    { label: "Two-sided 90%", sides: 2, a: "0.10", p: power },
+    { label: "Two-sided 95%", sides: 2, a: "0.05", p: power },
+    { label: "Two-sided 99%", sides: 2, a: "0.01", p: power },
+  ];
+  const tbody = document.getElementById("compare-body");
+  tbody.innerHTML = configs.map(c => {
+    const zac = c.sides === 2 ? Z_ALPHA.two[c.a] : Z_ALPHA.one[c.a];
+    const nc  = calcN(zac, zb, p1, p2);
+    const isActive = c.sides === tails && c.a === alpha;
+    const tag = c.sides === 1
+      ? `<span class="tag tag-green">1-sided</span>`
+      : `<span class="tag tag-blue">2-sided</span>`;
+    return `<tr class="${isActive ? 'highlight-row' : ''}">
+      <td>${c.label}${isActive ? tag : ''}</td>
+      <td>${zac.toFixed(3)}</td>
+      <td>${fmt(nc)}</td>
+      <td>${fmt(nc*2)}</td>
+    </tr>`;
+  }).join("");
+
+  // Formula
+  const num = ((za+zb)**2).toFixed(4);
+  const var_ = (p1*(1-p1) + p2*(1-p2)).toFixed(6);
+  const den  = (mde**2).toFixed(8);
+  document.getElementById("formula-out").innerHTML =
+    `n = <span class="hl">(Z${tails===2?'α/2':'α'} + Zβ)²</span> × [p₁(1-p₁) + p₂(1-p₂)] / (p₂ - p₁)²<br>` +
+    `n = <span class="hl">(${za.toFixed(3)} + ${zb.toFixed(3)})²</span> × [${(p1*(1-p1)).toFixed(6)} + ${(p2*(1-p2)).toFixed(6)}] / ${den}<br>` +
+    `n = <span class="hl">${num}</span> × ${var_} / ${den} = <span class="hl">${fmt(n)}</span>`;
+}
+
+["alpha","power","baseline","mde"].forEach(id =>
+  document.getElementById(id).addEventListener("input", calc)
+);
+calc();
+</script>
+</body>
+</html>

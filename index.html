@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Experimentation Toolkit</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0e0f11; --surface: #16181c; --surface2: #1e2126;
+    --border: rgba(255,255,255,0.07); --border-hover: rgba(255,255,255,0.14);
+    --text: #f0f0ee; --muted: #7a7f8a;
+    --accent: #c8f060; --accent-dim: rgba(200,240,96,0.12); --accent-border: rgba(200,240,96,0.3);
+    --blue: #60a8f0; --blue-dim: rgba(96,168,240,0.1); --blue-border: rgba(96,168,240,0.25);
+    --purple: #a78bfa; --purple-dim: rgba(167,139,250,0.1); --purple-border: rgba(167,139,250,0.25);
+    --amber: #f0c060; --amber-dim: rgba(240,192,96,0.1); --amber-border: rgba(240,192,96,0.25);
+    --mono: 'DM Mono', monospace; --sans: 'DM Sans', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 300; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 64px 16px 80px; }
+
+  nav { width: 100%; max-width: 800px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 80px; }
+  .nav-logo { font-family: var(--mono); font-size: 13px; color: var(--accent); letter-spacing: 0.08em; }
+  .nav-tag { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.06em; }
+
+  .hero { text-align: center; max-width: 560px; margin-bottom: 64px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+  h1 { font-size: clamp(32px, 6vw, 52px); font-weight: 300; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 16px; }
+  h1 strong { font-weight: 500; }
+  .hero-sub { font-size: 15px; color: var(--muted); line-height: 1.7; max-width: 420px; margin: 0 auto; }
+
+  .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; max-width: 800px; }
+  @media (max-width: 580px) { .tools { grid-template-columns: 1fr; } }
+
+  .tool-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+    padding: 32px 28px; cursor: pointer; text-decoration: none; color: inherit;
+    display: flex; flex-direction: column; gap: 0;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .tool-card:hover { border-color: var(--border-hover); background: #1a1c21; }
+  .tool-card.accent-card:hover { border-color: var(--accent-border); }
+  .tool-card.blue-card:hover { border-color: var(--blue-border); }
+
+  .tool-icon { font-size: 28px; margin-bottom: 20px; }
+  .tool-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px; }
+  .accent-card .tool-tag { color: var(--accent); }
+  .blue-card .tool-tag { color: var(--blue); }
+  .tool-name { font-size: 22px; font-weight: 500; letter-spacing: -0.02em; margin-bottom: 10px; line-height: 1.2; }
+  .tool-desc { font-size: 14px; color: var(--muted); line-height: 1.65; margin-bottom: 28px; flex: 1; }
+
+  .tool-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 28px; }
+  .pill { font-family: var(--mono); font-size: 10px; padding: 3px 9px; border-radius: 5px; letter-spacing: 0.04em; }
+  .accent-card .pill { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-border); }
+  .blue-card .pill { background: var(--blue-dim); color: var(--blue); border: 1px solid var(--blue-border); }
+
+  .tool-cta { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; }
+  .accent-card .tool-cta { color: var(--accent); }
+  .blue-card .tool-cta { color: var(--blue); }
+  .purple-card:hover { border-color: var(--purple-border); }
+  .purple-card .tool-tag { color: var(--purple); }
+  .purple-card .pill { background: var(--purple-dim); color: var(--purple); border: 1px solid var(--purple-border); }
+  .purple-card .tool-cta { color: var(--purple); }
+  .amber-card:hover { border-color: var(--amber-border); }
+  .amber-card .tool-tag { color: var(--amber); }
+  .amber-card .pill { background: var(--amber-dim); color: var(--amber); border: 1px solid var(--amber-border); }
+  .amber-card .tool-cta { color: var(--amber); }
+  .arrow { transition: transform 0.2s; }
+  .tool-card:hover .arrow { transform: translateX(4px); }
+
+  .stats-row { display: flex; gap: 32px; margin-top: 64px; }
+  .stat { text-align: center; }
+  .stat-num { font-family: var(--mono); font-size: 28px; font-weight: 500; color: var(--accent); }
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; font-family: var(--mono); letter-spacing: 0.04em; }
+
+  footer { margin-top: 80px; font-size: 11px; font-family: var(--mono); color: var(--muted); letter-spacing: 0.05em; opacity: 0.4; text-align: center; }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-logo">Test Right</span>
+  <span class="nav-tag">Experimentation Toolkit</span>
+</nav>
+
+<div class="hero">
+  <h1>Ship tests.<br><strong>Not guesses.</strong></h1>
+  <p class="hero-sub">Three sharp tools for experimenters. Pick the right test, size it correctly, then know if your results are real.</p>
+</div>
+
+<div class="tools">
+
+  <a class="tool-card purple-card" href="find-test.html">
+    <div class="tool-icon">🧭</div>
+    <p class="tool-tag">Tool 01</p>
+    <h2 class="tool-name">Find the Right Test</h2>
+    <p class="tool-desc">Not sure which method fits? Answer 5 questions. Get your top 3 recommended testing methodologies with a clear explanation of why.</p>
+    <div class="tool-pills">
+      <span class="pill">A/B Test</span>
+      <span class="pill">Bayesian</span>
+      <span class="pill">DiD</span>
+      <span class="pill">Synthetic Control</span>
+    </div>
+    <div class="tool-cta">Find my test <span class="arrow">→</span></div>
+  </a>
+
+  <a class="tool-card blue-card" href="sample-size.html">
+    <div class="tool-icon">📐</div>
+    <p class="tool-tag">Tool 02</p>
+    <h2 class="tool-name">Sample Size Calculator</h2>
+    <p class="tool-desc">Know how many users you need before you start — not after. Set your baseline, MDE, and confidence level. Get the number.</p>
+    <div class="tool-pills">
+      <span class="pill">Baseline rate</span>
+      <span class="pill">MDE</span>
+      <span class="pill">Power analysis</span>
+      <span class="pill">Full comparison</span>
+    </div>
+    <div class="tool-cta">Open calculator <span class="arrow">→</span></div>
+  </a>
+
+  <a class="tool-card amber-card" href="srm.html">
+    <div class="tool-icon">🔍</div>
+    <p class="tool-tag">Tool 03</p>
+    <h2 class="tool-name">SRM Checker</h2>
+    <p class="tool-desc">Sample Ratio Mismatch kills experiments silently. Detect broken randomization before you trust your results — and find out why it happened.</p>
+    <div class="tool-pills">
+      <span class="pill">Chi-square test</span>
+      <span class="pill">Expected vs actual</span>
+      <span class="pill">Common causes</span>
+    </div>
+    <div class="tool-cta">Check my split <span class="arrow">→</span></div>
+  </a>
+
+  <a class="tool-card accent-card" href="stat-sig.html">
+    <div class="tool-icon">⚡</div>
+    <p class="tool-tag">Tool 04</p>
+    <h2 class="tool-name">Stat Sig Calculator</h2>
+    <p class="tool-desc">Paste your control and treatment numbers. Know in seconds if your result is real or just noise. Includes p-value, confidence interval, and lift.</p>
+    <div class="tool-pills">
+      <span class="pill">Two-proportion Z-test</span>
+      <span class="pill">One &amp; two sided</span>
+      <span class="pill">P-value</span>
+      <span class="pill">95% CI</span>
+    </div>
+    <div class="tool-cta">Open calculator <span class="arrow">→</span></div>
+  </a>
+
+</div>
+
+
+
+<footer>testright toolkit &bull; built for experimenters &bull; no tracking, no ads</footer>
+
+</body>
+</html>

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stat Sig Calculator — TestRight Toolkit</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0f11;
+    --surface: #16181c;
+    --surface2: #1e2126;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.14);
+    --text: #f0f0ee;
+    --muted: #7a7f8a;
+    --accent: #c8f060;
+    --accent-dim: rgba(200,240,96,0.12);
+    --accent-border: rgba(200,240,96,0.3);
+    --blue: #60a8f0;
+    --blue-dim: rgba(96,168,240,0.1);
+    --blue-border: rgba(96,168,240,0.25);
+    --red: #f07060;
+    --red-dim: rgba(240,112,96,0.1);
+    --red-border: rgba(240,112,96,0.25);
+    --amber: #f0c060;
+    --amber-dim: rgba(240,192,96,0.1);
+    --amber-border: rgba(240,192,96,0.25);
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 300;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 16px 80px;
+  }
+
+  .header { text-align: center; margin-bottom: 48px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em; color: var(--accent); text-transform: uppercase; margin-bottom: 12px; }
+  h1 { font-size: clamp(26px, 5vw, 40px); font-weight: 300; letter-spacing: -0.02em; line-height: 1.1; }
+  h1 span { font-weight: 500; }
+  .subtitle { margin-top: 10px; font-size: 14px; color: var(--muted); }
+
+  .container { width: 100%; max-width: 760px; display: flex; flex-direction: column; gap: 16px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+  .card-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+
+  @media (max-width: 580px) {
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-family: var(--mono); letter-spacing: 0.03em; }
+  .field input, .field select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: var(--mono); font-size: 14px;
+    padding: 9px 12px; outline: none; transition: border-color 0.15s; appearance: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(200,240,96,0.08); }
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a7f8a'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; padding-right: 30px; cursor: pointer;
+  }
+  .field .hint { font-size: 11px; color: var(--muted); margin-top: 5px; font-family: var(--mono); opacity: 0.7; }
+
+  .toggle-wrap { display: flex; gap: 6px; }
+  .t-btn {
+    flex: 1; padding: 9px 0; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--muted); font-family: var(--mono);
+    font-size: 12px; cursor: pointer; transition: all 0.15s; letter-spacing: 0.03em;
+  }
+  .t-btn:hover { border-color: var(--border-hover); color: var(--text); }
+  .t-btn.active { background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent); }
+
+  /* Group inputs side by side */
+  .group-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 480px) { .group-row { grid-template-columns: 1fr; } }
+
+  .group-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .group-title { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+
+  /* Result */
+  .result-sig {
+    border-radius: 16px; padding: 28px 24px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .result-verdict { font-size: clamp(20px, 4vw, 26px); font-weight: 500; font-family: var(--mono); letter-spacing: -0.01em; }
+  .result-detail { font-size: 13px; font-family: var(--mono); opacity: 0.75; }
+
+  /* Stat chips */
+  .chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+  .chip-label { font-size: 11px; color: var(--muted); font-family: var(--mono); letter-spacing: 0.06em; }
+  .chip-val { font-size: 16px; font-weight: 500; font-family: var(--mono); color: var(--text); }
+
+  /* P-value bar */
+  .pval-section { margin-top: 4px; }
+  .pval-bar-wrap { position: relative; height: 6px; background: var(--surface2); border-radius: 3px; margin: 10px 0 6px; overflow: hidden; }
+  .pval-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease, background 0.3s; }
+  .pval-labels { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: var(--muted); }
+  .pval-marker { position: absolute; top: -3px; width: 2px; height: 12px; border-radius: 1px; }
+
+  /* Confidence levels table */
+  .conf-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 13px; }
+  .conf-table th { text-align: left; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 0 0 10px; font-weight: 400; border-bottom: 1px solid var(--border); }
+  .conf-table td { padding: 10px 0; border-bottom: 1px solid var(--border); color: var(--text); }
+  .conf-table tr:last-child td { border-bottom: none; }
+  .conf-table td:not(:first-child), .conf-table th:not(:first-child) { text-align: right; }
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; margin-left: 6px; }
+  .badge-sig { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-border); }
+  .badge-ns  { background: var(--red-dim);   color: var(--red);   border: 1px solid var(--red-border); }
+  .badge-cur { background: var(--blue-dim);  color: var(--blue);  border: 1px solid var(--blue-border); }
+
+  /* Lift */
+  .lift-pos { color: var(--accent); }
+  .lift-neg { color: var(--red); }
+
+  /* Formula */
+  .formula-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 2; word-break: break-all; }
+  .formula-box .hl { color: var(--accent); }
+
+
+  .site-nav { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 760px; margin-bottom: 48px; }
+  .nav-logo { font-family: var(--mono); font-size: 13px; color: var(--accent); letter-spacing: 0.08em; text-decoration: none; }
+  .nav-back { font-family: var(--mono); font-size: 12px; color: var(--muted); text-decoration: none; letter-spacing: 0.04em; transition: color 0.15s; }
+  .nav-back:hover { color: var(--text); }
+
+  footer { margin-top: 48px; font-size: 11px; font-family: var(--mono); color: var(--muted); letter-spacing: 0.05em; opacity: 0.5; text-align: center; }
+</style>
+</head>
+<body>
+
+
+<nav class="site-nav">
+  <a class="nav-logo" href="index.html">Test Right</a>
+  <a class="nav-back" href="index.html">← All tools</a>
+</nav>
+
+<div class="header">
+  <p class="eyebrow">Statistical Testing</p>
+  <h1>Stat Sig <span>Calculator</span></h1>
+  <p class="subtitle">Binary metric &mdash; two-proportion Z-test &mdash; one &amp; two sided</p>
+</div>
+
+<div class="container">
+
+  <!-- Test type + significance -->
+  <div class="card">
+    <p class="card-label">Test configuration</p>
+    <div class="grid-2">
+      <div class="field">
+        <label>Test type</label>
+        <div class="toggle-wrap">
+          <button class="t-btn" id="btn-one" onclick="setTails(1)">One-sided</button>
+          <button class="t-btn active" id="btn-two" onclick="setTails(2)">Two-sided</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Significance threshold (α)</label>
+        <select id="alpha">
+          <option value="0.10">90% confidence (α = 0.10)</option>
+          <option value="0.05" selected>95% confidence (α = 0.05)</option>
+          <option value="0.01">99% confidence (α = 0.01)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Group inputs -->
+  <div class="card">
+    <p class="card-label">Observed data</p>
+    <div class="group-row">
+      <div class="group-box">
+        <p class="group-title">Control (A)</p>
+        <div class="field" style="margin-bottom:10px;">
+          <label>Denominator — Visitors / Impressions</label>
+          <input type="number" id="n_a" value="10000" min="1" step="1">
+        </div>
+        <div class="field">
+          <label>Numerator — Conversions / Events</label>
+          <input type="number" id="c_a" value="885" min="0" step="1">
+          <p class="hint" id="rate_a_hint">Rate: 8.85%</p>
+        </div>
+      </div>
+      <div class="group-box">
+        <p class="group-title">Treatment (B)</p>
+        <div class="field" style="margin-bottom:10px;">
+          <label>Denominator — Visitors / Impressions</label>
+          <input type="number" id="n_b" value="10000" min="1" step="1">
+        </div>
+        <div class="field">
+          <label>Numerator — Conversions / Events</label>
+          <input type="number" id="c_b" value="920" min="0" step="1">
+          <p class="hint" id="rate_b_hint">Rate: 9.20%</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result verdict -->
+  <div class="result-sig" id="result-box">
+    <p class="result-verdict" id="verdict-text">—</p>
+    <p class="result-detail" id="verdict-detail">—</p>
+  </div>
+
+  <!-- Key stats -->
+  <div class="card">
+    <p class="card-label">Test statistics</p>
+    <div class="grid-4">
+      <div class="chip"><span class="chip-label">Z-score</span><span class="chip-val" id="z-out">—</span></div>
+      <div class="chip"><span class="chip-label" id="z-crit-label">Z critical (α/2)</span><span class="chip-val" id="z-crit-out">—</span></div>
+      <div class="chip"><span class="chip-label">P-value</span><span class="chip-val" id="pval-out">—</span></div>
+      <div class="chip"><span class="chip-label">Relative lift</span><span class="chip-val" id="lift-out">—</span></div>
+    </div>
+
+    <!-- P-value bar -->
+    <div class="pval-section" style="margin-top:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <span style="font-size:12px; color:var(--muted); font-family:var(--mono);">p-value position</span>
+        <span style="font-size:12px; font-family:var(--mono); color:var(--muted);" id="pval-bar-label">—</span>
+      </div>
+      <div class="pval-bar-wrap" id="pval-bar-wrap">
+        <div class="pval-bar-fill" id="pval-bar-fill" style="width:0%"></div>
+        <div class="pval-marker" id="alpha-marker" style="background: var(--amber);"></div>
+      </div>
+      <div class="pval-labels"><span>p = 0</span><span>p = 0.5</span><span>p = 1.0</span></div>
+    </div>
+  </div>
+
+  <!-- Confidence intervals -->
+  <div class="card">
+    <p class="card-label">Confidence interval — absolute difference (B − A)</p>
+    <div class="grid-3" style="margin-bottom:16px;">
+      <div class="chip"><span class="chip-label">Point estimate</span><span class="chip-val" id="diff-out">—</span></div>
+      <div class="chip"><span class="chip-label">95% CI lower</span><span class="chip-val" id="ci-lo-out">—</span></div>
+      <div class="chip"><span class="chip-label">95% CI upper</span><span class="chip-val" id="ci-hi-out">—</span></div>
+    </div>
+
+    <!-- CI visual bar -->
+    <div style="position:relative; height:28px; margin: 4px 0 8px;">
+      <div id="ci-track" style="position:absolute; top:50%; left:0; right:0; height:2px; background:var(--border); transform:translateY(-50%);"></div>
+      <div id="ci-bar" style="position:absolute; top:50%; height:4px; background:var(--blue); border-radius:2px; transform:translateY(-50%); transition:left 0.3s,width 0.3s;"></div>
+      <div id="zero-line" style="position:absolute; top:0; bottom:0; width:2px; background:var(--muted); border-radius:1px; opacity:0.5;"></div>
+      <div id="est-dot" style="position:absolute; top:50%; width:10px; height:10px; border-radius:50%; background:var(--accent); transform:translate(-50%,-50%); transition:left 0.3s;"></div>
+    </div>
+    <div id="ci-axis" style="display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; color:var(--muted);"></div>
+  </div>
+
+  <!-- All confidence levels comparison -->
+  <div class="card">
+    <p class="card-label">Significance across thresholds</p>
+    <table class="conf-table">
+      <thead>
+        <tr>
+          <th>Threshold</th>
+          <th>Test type</th>
+          <th>Z critical</th>
+          <th>P-value vs α</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody id="conf-body"></tbody>
+    </table>
+  </div>
+
+  <!-- Formula -->
+  <div class="card">
+    <p class="card-label">Formula breakdown</p>
+    <div class="formula-box" id="formula-out"></div>
+  </div>
+
+</div>
+
+<footer>testright toolkit &bull; stat sig calculator &bull; <a href='index.html' style='color:var(--muted);'>← all tools</a></footer>
+
+<script>
+let tails = 2;
+
+const Z_CRIT = {
+  two: { "0.10": 1.645, "0.05": 1.960, "0.01": 2.576 },
+  one: { "0.10": 1.282, "0.05": 1.645, "0.01": 2.326 }
+};
+
+function setTails(t) {
+  tails = t;
+  document.getElementById("btn-one").classList.toggle("active", t === 1);
+  document.getElementById("btn-two").classList.toggle("active", t === 2);
+  calc();
+}
+
+// Standard normal CDF via rational approximation (Abramowitz & Stegun)
+function normCDF(z) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const d = 0.3989422820 * Math.exp(-z * z / 2);
+  const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.7814779 + t * (-1.8212560 + t * 1.3302744))));
+  return z > 0 ? 1 - p : p;
+}
+
+function pValue(z, sides) {
+  const p = normCDF(-Math.abs(z));
+  return sides === 2 ? 2 * p : p;
+}
+
+function fmt2(n) { return (n * 100).toFixed(2) + "%"; }
+function fmtDiff(n) { return (n >= 0 ? "+" : "") + (n * 100).toFixed(2) + "pp"; }
+function fmtPval(p) {
+  if (p < 0.0001) return "< 0.0001";
+  return p.toFixed(4);
+}
+
+function calc() {
+  const alpha = document.getElementById("alpha").value;
+  const n_a = parseInt(document.getElementById("n_a").value) || 0;
+  const c_a = parseInt(document.getElementById("c_a").value) || 0;
+  const n_b = parseInt(document.getElementById("n_b").value) || 0;
+  const c_b = parseInt(document.getElementById("c_b").value) || 0;
+
+  if (!n_a || !n_b || c_a > n_a || c_b > n_b) return;
+
+  const p_a = c_a / n_a;
+  const p_b = c_b / n_b;
+  const diff = p_b - p_a;
+  const lift = p_a > 0 ? ((p_b - p_a) / p_a) : 0;
+
+  // Hints
+  document.getElementById("rate_a_hint").textContent = "Rate: " + fmt2(p_a);
+  document.getElementById("rate_b_hint").textContent = "Rate: " + fmt2(p_b);
+
+  // Pooled proportion for Z-test
+  const p_pool = (c_a + c_b) / (n_a + n_b);
+  const se = Math.sqrt(p_pool * (1 - p_pool) * (1/n_a + 1/n_b));
+  const z = se > 0 ? diff / se : 0;
+
+  const z_crit = tails === 2 ? Z_CRIT.two[alpha] : Z_CRIT.one[alpha];
+  const pval = pValue(z, tails);
+  const isSig = pval < parseFloat(alpha);
+
+  // Confidence interval (unpooled SE for CI)
+  const se_ci = Math.sqrt(p_a*(1-p_a)/n_a + p_b*(1-p_b)/n_b);
+  const z_95 = 1.960;
+  const ci_lo = diff - z_95 * se_ci;
+  const ci_hi = diff + z_95 * se_ci;
+
+  // Z critical label
+  document.getElementById("z-crit-label").textContent = tails === 2 ? "Z critical (α/2)" : "Z critical (α)";
+
+  // Stats chips
+  document.getElementById("z-out").textContent = z.toFixed(3);
+  document.getElementById("z-crit-out").textContent = "±" + z_crit.toFixed(3);
+  document.getElementById("pval-out").textContent = fmtPval(pval);
+  const liftEl = document.getElementById("lift-out");
+  liftEl.textContent = (lift >= 0 ? "+" : "") + (lift * 100).toFixed(2) + "%";
+  liftEl.className = "chip-val " + (lift >= 0 ? "lift-pos" : "lift-neg");
+
+  // Verdict
+  const rb = document.getElementById("result-box");
+  const vt = document.getElementById("verdict-text");
+  const vd = document.getElementById("verdict-detail");
+  if (isSig) {
+    rb.style.background = "var(--accent-dim)";
+    rb.style.border = "1px solid var(--accent-border)";
+    vt.style.color = "var(--accent)";
+    vt.textContent = "✓ Statistically Significant";
+    vd.style.color = "rgba(200,240,96,0.65)";
+    vd.textContent = `p = ${fmtPval(pval)} < α = ${alpha} · ${tails === 2 ? "two" : "one"}-sided · ${(1-parseFloat(alpha))*100}% confidence`;
+  } else {
+    rb.style.background = "var(--red-dim)";
+    rb.style.border = "1px solid var(--red-border)";
+    vt.style.color = "var(--red)";
+    vt.textContent = "✗ Not Significant";
+    vd.style.color = "rgba(240,112,96,0.65)";
+    vd.textContent = `p = ${fmtPval(pval)} ≥ α = ${alpha} · ${tails === 2 ? "two" : "one"}-sided · insufficient evidence`;
+  }
+
+  // P-value bar
+  const pPct = Math.min(pval, 1) * 100;
+  const alphaPct = parseFloat(alpha) * 100;
+  const fill = document.getElementById("pval-bar-fill");
+  fill.style.width = pPct + "%";
+  fill.style.background = isSig ? "var(--accent)" : "var(--red)";
+  document.getElementById("pval-bar-label").textContent = `p = ${fmtPval(pval)}`;
+  const marker = document.getElementById("alpha-marker");
+  marker.style.left = `calc(${alphaPct}% - 1px)`;
+
+  // CI chips
+  document.getElementById("diff-out").textContent = fmtDiff(diff);
+  document.getElementById("ci-lo-out").textContent = fmtDiff(ci_lo);
+  document.getElementById("ci-hi-out").textContent = fmtDiff(ci_hi);
+
+  // CI bar visual
+  const span = Math.max(Math.abs(ci_lo), Math.abs(ci_hi)) * 1.5 || 0.02;
+  const lo_pct  = ((ci_lo + span) / (2 * span)) * 100;
+  const hi_pct  = ((ci_hi + span) / (2 * span)) * 100;
+  const est_pct = ((diff  + span) / (2 * span)) * 100;
+  const zero_pct = (span / (2 * span)) * 100;
+  document.getElementById("ci-bar").style.left  = lo_pct.toFixed(1) + "%";
+  document.getElementById("ci-bar").style.width = (hi_pct - lo_pct).toFixed(1) + "%";
+  document.getElementById("ci-bar").style.background = isSig ? "var(--accent)" : "var(--blue)";
+  document.getElementById("est-dot").style.left  = est_pct.toFixed(1) + "%";
+  document.getElementById("zero-line").style.left = zero_pct.toFixed(1) + "%";
+  const fmtAxis = v => (v*100).toFixed(1)+"pp";
+  document.getElementById("ci-axis").innerHTML =
+    `<span>${fmtAxis(-span)}</span><span>0pp</span><span>${fmtAxis(span)}</span>`;
+
+  // All thresholds table
+  const rows = [
+    { label: "90% confidence", a: "0.10", sides: 1 },
+    { label: "95% confidence", a: "0.05", sides: 1 },
+    { label: "99% confidence", a: "0.01", sides: 1 },
+    { label: "90% confidence", a: "0.10", sides: 2 },
+    { label: "95% confidence", a: "0.05", sides: 2 },
+    { label: "99% confidence", a: "0.01", sides: 2 },
+  ];
+  const tbody = document.getElementById("conf-body");
+  tbody.innerHTML = rows.map(r => {
+    const zc = r.sides === 2 ? Z_CRIT.two[r.a] : Z_CRIT.one[r.a];
+    const pv = pValue(z, r.sides);
+    const sig = pv < parseFloat(r.a);
+    const isCur = r.sides === tails && r.a === alpha;
+    const sigBadge = sig
+      ? `<span class="badge badge-sig">significant</span>`
+      : `<span class="badge badge-ns">not sig</span>`;
+    const curBadge = isCur ? `<span class="badge badge-cur">current</span>` : "";
+    return `<tr>
+      <td>${r.label}${curBadge}</td>
+      <td>${r.sides === 2 ? "two-sided" : "one-sided"}</td>
+      <td>${(r.sides===2?"±":"")}${zc.toFixed(3)}</td>
+      <td style="color:var(--muted)">${fmtPval(pv)}</td>
+      <td>${sigBadge}</td>
+    </tr>`;
+  }).join("");
+
+  // Formula
+  document.getElementById("formula-out").innerHTML =
+    `p_pool = (${c_a} + ${c_b}) / (${n_a} + ${n_b}) = <span class="hl">${(p_pool*100).toFixed(4)}%</span><br>` +
+    `SE = √[p_pool × (1−p_pool) × (1/n_A + 1/n_B)] = <span class="hl">${se.toFixed(6)}</span><br>` +
+    `Z = (p_B − p_A) / SE = (${fmt2(p_b)} − ${fmt2(p_a)}) / ${se.toFixed(6)} = <span class="hl">${z.toFixed(4)}</span><br>` +
+    `p-value (${tails === 2 ? "two" : "one"}-sided) = <span class="hl">${fmtPval(pval)}</span> ${isSig ? "< " : "≥ "} α = ${alpha}`;
+}
+
+["alpha","n_a","c_a","n_b","c_b"].forEach(id =>
+  document.getElementById(id).addEventListener("input", calc)
+);
+calc();
+</script>
+</body>
+</html>

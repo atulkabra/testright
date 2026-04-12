@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find the Right Test — Experimentation Toolkit</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0e0f11; --surface: #16181c; --surface2: #1e2126;
+    --border: rgba(255,255,255,0.07); --border-hover: rgba(255,255,255,0.18);
+    --text: #f0f0ee; --muted: #7a7f8a;
+    --accent: #c8f060; --accent-dim: rgba(200,240,96,0.12); --accent-border: rgba(200,240,96,0.3);
+    --blue: #60a8f0; --blue-dim: rgba(96,168,240,0.1); --blue-border: rgba(96,168,240,0.25);
+    --purple: #a78bfa; --purple-dim: rgba(167,139,250,0.1); --purple-border: rgba(167,139,250,0.28);
+    --mono: 'DM Mono', monospace; --sans: 'DM Sans', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 300; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 16px 80px; }
+
+  nav { width: 100%; max-width: 680px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 56px; }
+  .nav-logo { font-family: var(--mono); font-size: 13px; color: var(--purple); letter-spacing: 0.08em; text-decoration: none; }
+  .nav-back { font-family: var(--mono); font-size: 12px; color: var(--muted); text-decoration: none; letter-spacing: 0.04em; transition: color 0.15s; }
+  .nav-back:hover { color: var(--text); }
+
+  .container { width: 100%; max-width: 680px; }
+
+  .header { margin-bottom: 40px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em; color: var(--purple); text-transform: uppercase; margin-bottom: 12px; }
+  h1 { font-size: clamp(26px, 5vw, 38px); font-weight: 300; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 10px; }
+  h1 strong { font-weight: 500; }
+  .subtitle { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+  /* Progress */
+  .progress-wrap { margin-bottom: 36px; }
+  .progress-top { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+  .progress-bar { height: 3px; background: var(--surface2); border-radius: 2px; }
+  .progress-fill { height: 3px; background: var(--purple); border-radius: 2px; transition: width 0.4s ease; }
+
+  /* Question card */
+  .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 32px 28px; margin-bottom: 16px; }
+  .q-num { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--purple); margin-bottom: 12px; }
+  .q-text { font-size: 19px; font-weight: 400; letter-spacing: -0.01em; line-height: 1.4; margin-bottom: 6px; }
+  .q-hint { font-size: 13px; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
+
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .opt {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 18px; cursor: pointer;
+    transition: all 0.15s; display: flex; align-items: flex-start; gap: 14px;
+  }
+  .opt:hover { border-color: var(--border-hover); background: #22252b; }
+  .opt.selected { background: var(--purple-dim); border-color: var(--purple-border); }
+  .opt-letter {
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 5px; padding: 2px 7px; flex-shrink: 0; margin-top: 1px;
+    transition: all 0.15s;
+  }
+  .opt.selected .opt-letter { background: var(--purple-dim); border-color: var(--purple-border); color: var(--purple); }
+  .opt-content {}
+  .opt-label { font-size: 14px; font-weight: 400; color: var(--text); margin-bottom: 2px; }
+  .opt-sub { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .opt.selected .opt-label { color: var(--purple); }
+
+  /* Nav buttons */
+  .btn-row { display: flex; gap: 10px; margin-top: 8px; }
+  .btn-next {
+    flex: 1; padding: 13px; border-radius: 12px; border: none;
+    background: var(--purple); color: #0e0f11; font-family: var(--mono);
+    font-size: 13px; font-weight: 500; cursor: pointer; letter-spacing: 0.04em;
+    transition: opacity 0.15s;
+  }
+  .btn-next:disabled { opacity: 0.25; cursor: not-allowed; }
+  .btn-next:not(:disabled):hover { opacity: 0.88; }
+  .btn-back {
+    padding: 13px 20px; border-radius: 12px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted); font-family: var(--mono);
+    font-size: 13px; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-back:hover { border-color: var(--border-hover); color: var(--text); }
+
+  /* Results */
+  .results-wrap { display: none; }
+  .results-wrap.show { display: block; }
+
+  .results-header { margin-bottom: 28px; }
+  .results-title { font-size: 26px; font-weight: 300; letter-spacing: -0.02em; margin-bottom: 6px; }
+  .results-sub { font-size: 14px; color: var(--muted); }
+
+  .result-card {
+    border-radius: 18px; padding: 26px 24px; margin-bottom: 14px;
+    border: 1px solid var(--border);
+  }
+  .result-card.rank-1 { background: var(--purple-dim); border-color: var(--purple-border); }
+  .result-card.rank-2 { background: var(--surface); }
+  .result-card.rank-3 { background: var(--surface); }
+
+  .result-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .rank-badge { font-family: var(--mono); font-size: 10px; padding: 3px 9px; border-radius: 5px; letter-spacing: 0.06em; flex-shrink: 0; }
+  .rank-1 .rank-badge { background: var(--purple); color: #0e0f11; }
+  .rank-2 .rank-badge { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .rank-3 .rank-badge { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .result-name { font-size: 18px; font-weight: 500; letter-spacing: -0.01em; }
+  .rank-1 .result-name { color: var(--purple); }
+
+  .result-score-bar { height: 4px; background: var(--surface2); border-radius: 2px; margin-bottom: 14px; }
+  .result-score-fill { height: 4px; border-radius: 2px; background: var(--purple); transition: width 0.6s ease; }
+  .rank-2 .result-score-fill, .rank-3 .result-score-fill { background: var(--muted); opacity: 0.5; }
+
+  .result-why { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 14px; }
+  .rank-1 .result-why { color: rgba(167,139,250,0.8); }
+
+  .result-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .result-tag { font-family: var(--mono); font-size: 10px; padding: 3px 9px; border-radius: 5px; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .rank-1 .result-tag { background: rgba(167,139,250,0.08); color: var(--purple); border-color: var(--purple-border); }
+
+  .when-not { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .when-not strong { color: var(--text); font-weight: 400; }
+
+  .restart-btn {
+    width: 100%; margin-top: 20px; padding: 13px; border-radius: 12px;
+    border: 1px solid var(--purple-border); background: transparent;
+    color: var(--purple); font-family: var(--mono); font-size: 13px;
+    cursor: pointer; letter-spacing: 0.04em; transition: all 0.15s;
+  }
+  .restart-btn:hover { background: var(--purple-dim); }
+
+  footer { margin-top: 64px; font-size: 11px; font-family: var(--mono); color: var(--muted); letter-spacing: 0.05em; opacity: 0.4; text-align: center; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Test Right</a>
+  <a class="nav-back" href="index.html">← All tools</a>
+</nav>
+
+<div class="container">
+
+  <div class="header">
+    <p class="eyebrow">Tool 01</p>
+    <h1>Find the <strong>right test</strong><br>for your use case.</h1>
+    <p class="subtitle">Answer 5 questions. Get your top 3 recommended testing methodologies with a clear explanation of why.</p>
+  </div>
+
+  <!-- Quiz -->
+  <div id="quiz">
+    <div class="progress-wrap">
+      <div class="progress-top">
+        <span id="progress-label">Question 1 of 5</span>
+        <span id="progress-pct">20%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:20%"></div></div>
+    </div>
+
+    <div class="q-card" id="q-card">
+      <p class="q-num" id="q-num">Question 01</p>
+      <p class="q-text" id="q-text"></p>
+      <p class="q-hint" id="q-hint"></p>
+      <div class="options" id="options"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-back" id="btn-back" onclick="prevQ()" style="display:none">← Back</button>
+      <button class="btn-next" id="btn-next" onclick="nextQ()" disabled>Next →</button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-wrap" id="results">
+    <div class="results-header">
+      <p class="results-title">Your top 3 methods</p>
+      <p class="results-sub">Based on your answers — ranked by fit.</p>
+    </div>
+    <div id="results-body"></div>
+    <button class="restart-btn" onclick="restart()">↺ Start over</button>
+  </div>
+
+</div>
+
+<footer>experimentation toolkit &bull; find the right test &bull; <a href="index.html" style="color:var(--muted);">← all tools</a></footer>
+
+<script>
+const questions = [
+  {
+    num: '01',
+    text: 'Can you randomly assign users or units to groups?',
+    hint: 'This is the most important question. True randomization is the gold standard — it eliminates selection bias.',
+    options: [
+      { letter: 'A', label: 'Yes — full random assignment', sub: 'I can split users into control and treatment randomly.', scores: { ab: 4, bayesian: 4, sequential: 4, did: 0, synth: 0, prepost: 0 } },
+      { letter: 'B', label: 'Partially — cluster or group level only', sub: 'I can randomize by store, city, or cohort but not individual users.', scores: { ab: 2, bayesian: 2, sequential: 1, did: 3, synth: 3, prepost: 1 } },
+      { letter: 'C', label: 'No — I cannot randomize', sub: 'Treatment already happened, or randomization is not possible.', scores: { ab: 0, bayesian: 0, sequential: 0, did: 4, synth: 4, prepost: 3 } },
+    ]
+  },
+  {
+    num: '02',
+    text: 'Do you need to make decisions while the test is running?',
+    hint: 'Some teams need to stop tests early if results look strong. Others can commit to a fixed runtime.',
+    options: [
+      { letter: 'A', label: 'Yes — I need to monitor and possibly stop early', sub: 'I want to call a winner as soon as results are convincing.', scores: { ab: 0, bayesian: 4, sequential: 4, did: 0, synth: 0, prepost: 0 } },
+      { letter: 'B', label: 'No — I will wait until the end', sub: 'I can commit to a fixed sample size and wait it out.', scores: { ab: 4, bayesian: 2, sequential: 1, did: 3, synth: 3, prepost: 3 } },
+    ]
+  },
+  {
+    num: '03',
+    text: 'Do you have pre-treatment data for both groups?',
+    hint: 'Historical baseline data before the intervention allows powerful before/after and comparison designs.',
+    options: [
+      { letter: 'A', label: 'Yes — solid historical data for both groups', sub: 'I have weeks or months of data before the test started.', scores: { ab: 1, bayesian: 2, sequential: 1, did: 4, synth: 4, prepost: 3 } },
+      { letter: 'B', label: 'Yes — but only for the treated group', sub: 'I have pre-data for one side but not a clean comparison group.', scores: { ab: 1, bayesian: 1, sequential: 1, did: 1, synth: 1, prepost: 4 } },
+      { letter: 'C', label: 'No — starting fresh', sub: 'No meaningful historical data available.', scores: { ab: 3, bayesian: 3, sequential: 3, did: 0, synth: 0, prepost: 0 } },
+    ]
+  },
+  {
+    num: '04',
+    text: 'How large is your expected sample size per group?',
+    hint: 'Sample size affects which methods have enough power to detect real effects.',
+    options: [
+      { letter: 'A', label: 'Small — under 1,000', sub: 'Limited traffic or a niche audience.', scores: { ab: 1, bayesian: 4, sequential: 2, did: 2, synth: 3, prepost: 2 } },
+      { letter: 'B', label: 'Medium — 1,000 to 50,000', sub: 'Moderate traffic, typical for most product experiments.', scores: { ab: 3, bayesian: 3, sequential: 3, did: 3, synth: 2, prepost: 3 } },
+      { letter: 'C', label: 'Large — over 50,000', sub: 'High traffic, large marketplace or platform.', scores: { ab: 4, bayesian: 2, sequential: 4, did: 3, synth: 2, prepost: 3 } },
+    ]
+  },
+  {
+    num: '05',
+    text: 'Do you have a clean control group that never received treatment?',
+    hint: 'Some interventions are hard to contain — everyone eventually gets exposed, or a true holdout is impossible.',
+    options: [
+      { letter: 'A', label: 'Yes — clear untreated control group', sub: 'I can keep a group completely unexposed throughout.', scores: { ab: 4, bayesian: 4, sequential: 4, did: 3, synth: 2, prepost: 1 } },
+      { letter: 'B', label: 'No — everyone eventually gets the treatment', sub: 'Full rollout happened, no holdout possible.', scores: { ab: 0, bayesian: 0, sequential: 0, did: 2, synth: 3, prepost: 4 } },
+      { letter: 'C', label: 'No control group at all', sub: 'I only have data from the treated units.', scores: { ab: 0, bayesian: 0, sequential: 0, did: 0, synth: 4, prepost: 3 } },
+    ]
+  }
+];
+
+const methods = {
+  ab: {
+    name: 'A/B Test — Frequentist',
+    tags: ['Random assignment', 'Fixed sample', 'Two-proportion Z-test', 'p-value'],
+    why: 'You have the ability to randomly assign users and can commit to a fixed runtime. This is the gold standard — clean, interpretable, and well-understood by stakeholders.',
+    when_not: 'Avoid if: you cannot randomize, need to stop early, or have very small sample sizes.'
+  },
+  bayesian: {
+    name: 'Bayesian A/B Test',
+    tags: ['Prior beliefs', 'Probability of superiority', 'No fixed sample', 'Early stopping'],
+    why: 'Your setup calls for flexibility — you want to monitor results continuously and make decisions as data comes in. Bayesian testing gives you the probability your variant is better, not just a yes/no.',
+    when_not: 'Avoid if: stakeholders require traditional p-values, or you need a fixed decision rule.'
+  },
+  sequential: {
+    name: 'Sequential Testing',
+    tags: ['Early stopping', 'Type I error controlled', 'Always-valid p-values', 'High traffic'],
+    why: 'You need frequentist rigor but also want the option to stop early. Sequential testing lets you peek at results without inflating your false positive rate — best of both worlds at scale.',
+    when_not: 'Avoid if: sample sizes are small or you have no need to monitor during the test.'
+  },
+  did: {
+    name: 'Difference-in-Differences',
+    tags: ['Observational', 'Pre/post data required', 'Parallel trends', 'Natural experiment'],
+    why: 'Randomization is not fully possible but you have pre-treatment data for both groups. DiD controls for time trends by comparing how both groups changed — not just the treated group.',
+    when_not: 'Avoid if: parallel trends assumption is violated, or you have no pre-treatment data.'
+  },
+  synth: {
+    name: 'Synthetic Control',
+    tags: ['No randomization', 'Constructs counterfactual', 'Few treated units', 'Policy evaluation'],
+    why: 'You have a small number of treated units (like one city or one store) and a pool of untreated ones. Synthetic Control builds a weighted combination of controls to estimate what would have happened without treatment.',
+    when_not: 'Avoid if: you have many treated units, or the pre-treatment fit between treated and synthetic unit is poor.'
+  },
+  prepost: {
+    name: 'Pre-Post Analysis',
+    tags: ['Before/after', 'No control group', 'Simple', 'Higher bias risk'],
+    why: 'A control group is unavailable and you only have pre and post data for the treated group. Pre-Post is the simplest option but is vulnerable to time-based confounders — use it when nothing else is possible and results are directional.',
+    when_not: 'Avoid if: seasonality, external events, or other time-based factors could explain the change.'
+  }
+};
+
+let current = 0;
+let answers = new Array(questions.length).fill(null);
+
+function renderQ() {
+  const q = questions[current];
+  const pct = Math.round(((current + 1) / questions.length) * 100);
+  document.getElementById('progress-label').textContent = `Question ${current + 1} of ${questions.length}`;
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('q-num').textContent = 'Question ' + q.num;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('q-hint').textContent = q.hint;
+
+  const opts = document.getElementById('options');
+  opts.innerHTML = q.options.map((o, i) => `
+    <div class="opt ${answers[current] === i ? 'selected' : ''}" onclick="selectOpt(${i})">
+      <span class="opt-letter">${o.letter}</span>
+      <div class="opt-content">
+        <div class="opt-label">${o.label}</div>
+        <div class="opt-sub">${o.sub}</div>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('btn-next').disabled = answers[current] === null;
+  document.getElementById('btn-back').style.display = current > 0 ? 'block' : 'none';
+  document.getElementById('btn-next').textContent = current === questions.length - 1 ? 'See results →' : 'Next →';
+}
+
+function selectOpt(i) {
+  answers[current] = i;
+  document.querySelectorAll('.opt').forEach((el, idx) => el.classList.toggle('selected', idx === i));
+  document.getElementById('btn-next').disabled = false;
+}
+
+function nextQ() {
+  if (answers[current] === null) return;
+  if (current < questions.length - 1) {
+    current++;
+    renderQ();
+  } else {
+    showResults();
+  }
+}
+
+function prevQ() {
+  if (current > 0) { current--; renderQ(); }
+}
+
+function showResults() {
+  // Tally scores
+  const totals = { ab: 0, bayesian: 0, sequential: 0, did: 0, synth: 0, prepost: 0 };
+  questions.forEach((q, qi) => {
+    const ans = answers[qi];
+    if (ans !== null) {
+      const s = q.options[ans].scores;
+      Object.keys(s).forEach(k => totals[k] += s[k]);
+    }
+  });
+
+  // Sort and take top 3
+  const maxScore = Math.max(...Object.values(totals));
+  const ranked = Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 3);
+
+  document.getElementById('quiz').style.display = 'none';
+  const resultsWrap = document.getElementById('results');
+  resultsWrap.classList.add('show');
+
+  const body = document.getElementById('results-body');
+  body.innerHTML = ranked.map(([key, score], i) => {
+    const m = methods[key];
+    const pct = Math.round((score / maxScore) * 100);
+    const rankClass = ['rank-1', 'rank-2', 'rank-3'][i];
+    const rankLabel = ['Best fit', 'Strong fit', 'Consider'][i];
+    return `
+      <div class="result-card ${rankClass}">
+        <div class="result-top">
+          <span class="rank-badge">${rankLabel}</span>
+          <span class="result-name">${m.name}</span>
+        </div>
+        <div class="result-score-bar"><div class="result-score-fill" style="width:${pct}%"></div></div>
+        <p class="result-why">${m.why}</p>
+        <div class="result-tags">${m.tags.map(t => `<span class="result-tag">${t}</span>`).join('')}</div>
+        <div class="when-not"><strong>Watch out:</strong> ${m.when_not}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function restart() {
+  current = 0;
+  answers = new Array(questions.length).fill(null);
+  document.getElementById('quiz').style.display = 'block';
+  document.getElementById('results').classList.remove('show');
+  renderQ();
+}
+
+renderQ();
+</script>
+</body>
+</html>
