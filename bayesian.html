@@ -543,20 +543,26 @@ function drawPosterior(aa, ab, ba, bb) {
   const ptsA = betaCurvePoints(aa, ab, 300);
   const ptsB = betaCurvePoints(ba, bb, 300);
 
-  // Merge x ranges
-  const allX = [...new Set([...ptsA.map(p=>p.x), ...ptsB.map(p=>p.x)])].sort((a,b)=>a-b);
+  // Find tight x range across both distributions
+  const allPts = [...ptsA, ...ptsB];
+  const xMin = Math.max(0, Math.min(...allPts.map(p=>p.x)) - 0.5);
+  const xMax = Math.min(100, Math.max(...allPts.map(p=>p.x)) + 0.5);
+
+  // Build uniform x grid across tight range
+  const N = 300;
+  const dx = (xMax - xMin) / N;
+  const allX = Array.from({length: N+1}, (_, i) => parseFloat((xMin + i*dx).toFixed(4)));
 
   function interp(pts, x) {
     for (let i = 0; i < pts.length - 1; i++) {
       if (pts[i].x <= x && pts[i+1].x >= x) {
-        const t = (x - pts[i].x) / (pts[i+1].x - pts[i].x);
+        const t = (pts[i+1].x - pts[i].x) < 1e-10 ? 0 : (x - pts[i].x) / (pts[i+1].x - pts[i].x);
         return pts[i].y + t * (pts[i+1].y - pts[i].y);
       }
     }
     return 0;
   }
 
-  const labels = allX;
   const dataA = allX.map(x => interp(ptsA, x));
   const dataB = allX.map(x => interp(ptsB, x));
 
@@ -565,24 +571,38 @@ function drawPosterior(aa, ab, ba, bb) {
   posteriorChart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels,
+      labels: allX,
       datasets: [
-        { label: 'Control (A)', data: dataA, borderColor: '#60a8f0', borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: 'rgba(96,168,240,0.08)', tension: 0.4 },
-        { label: 'Treatment (B)', data: dataB, borderColor: '#a78bfa', borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: 'rgba(167,139,250,0.08)', tension: 0.4 },
+        { label: 'Control (A)', data: dataA, borderColor: '#60a8f0', borderWidth: 2.5, pointRadius: 0, fill: true, backgroundColor: 'rgba(96,168,240,0.1)', tension: 0.3 },
+        { label: 'Treatment (B)', data: dataB, borderColor: '#a78bfa', borderWidth: 2.5, pointRadius: 0, fill: true, backgroundColor: 'rgba(167,139,250,0.1)', tension: 0.3 },
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      animation: { duration: 300 },
-      plugins: { legend: { display: false }, tooltip: {
-        callbacks: {
-          title: items => items[0].label.toFixed(2) + '%',
-          label: item => item.dataset.label + ': density ' + item.raw.toFixed(2)
+      animation: { duration: 400 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: items => parseFloat(items[0].label).toFixed(2) + '%',
+            label: item => item.dataset.label + ': density ' + item.raw.toFixed(2)
+          }
         }
-      }},
+      },
       scales: {
-        x: { type: 'linear', title: { display: true, text: 'Conversion rate (%)', color: '#555', font: { family: 'DM Mono', size: 10 } }, ticks: { color: '#555', font: { family: 'DM Mono', size: 10 }, callback: v => v.toFixed(1) + '%' }, grid: { color: 'rgba(255,255,255,0.04)' } },
-        y: { title: { display: false }, ticks: { color: '#555', font: { family: 'DM Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+        x: {
+          type: 'linear',
+          min: xMin,
+          max: xMax,
+          title: { display: true, text: 'Conversion rate (%)', color: '#555', font: { family: 'DM Mono', size: 10 } },
+          ticks: { color: '#555', font: { family: 'DM Mono', size: 10 }, callback: v => v.toFixed(1) + '%', maxTicksLimit: 8 },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        },
+        y: {
+          title: { display: false },
+          ticks: { color: '#555', font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 5 },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        }
       }
     }
   });
