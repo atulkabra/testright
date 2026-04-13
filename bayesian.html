@@ -116,7 +116,8 @@
 
   /* Posterior curve */
   .curve-wrap { position: relative; }
-  canvas#posteriorChart { width: 100%; height: 200px; display: block; }
+  .chart-wrap { position: relative; height: 260px; width: 100%; }
+canvas#posteriorChart { display: block; }
 
   /* Chips row */
   .chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
@@ -256,7 +257,7 @@
   <!-- POSTERIOR CURVE -->
   <div class="card">
     <p class="card-label">Posterior distributions <span class="tip" data-title="What is this chart?" data-tip="Each curve shows the probability distribution of the true conversion rate. Where they overlap is uncertainty. As you collect more data, the curves narrow and separate — making the decision clearer.">?</span></p>
-    <canvas id="posteriorChart" height="180"></canvas>
+    <div class="chart-wrap"><canvas id="posteriorChart"></canvas></div>
     <div style="display:flex;gap:20px;margin-top:12px;font-family:var(--mono);font-size:11px;">
       <span style="color:var(--blue);">— Control (A)</span>
       <span style="color:var(--purple);">— Treatment (B)</span>
