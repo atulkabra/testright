@@ -701,13 +701,14 @@ function calcSeq() {
   const cost = (finalZ - standardZ).toFixed(3);
 
   // Summary
+  const mName = seqMethod === 'obf' ? 'O’Brien-Fleming' : 'Pocock';
+  const mDesc = seqMethod === 'obf'
+    ? 'Early boundaries are strict — you need a very strong signal to stop early.'
+    : 'Equal boundaries at every look — easier to explain but more conservative overall.';
   document.getElementById('seqSummary').innerHTML =
-    `<strong>${seqMethod === 'obf' ? 'O'Brien-Fleming' : 'Pocock'} boundaries · ${K} looks.</strong> ` +
-    `Final threshold: Z ≥ ${finalZ.toFixed(3)} vs ${standardZ.toFixed(3)} without peeking. ` +
-    `Cost of peeking: <strong>+${cost} Z-score units</strong> at the final look. ` +
-    (seqMethod === 'obf'
-      ? 'Early boundaries are strict — you need a very strong signal to stop early.'
-      : 'Equal boundaries at every look — easier to explain but more conservative overall.');
+    '<strong>' + mName + ' boundaries · ' + K + ' looks.</strong> ' +
+    'Final threshold: Z ≥ ' + finalZ.toFixed(3) + ' vs ' + standardZ.toFixed(3) + ' without peeking. ' +
+    'Cost of peeking: <strong>+' + cost + ' Z-score units</strong> at the final look. ' + mDesc;
 
   // Table rows
   const tbody = document.getElementById('seqBody2');
