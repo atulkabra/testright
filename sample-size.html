@@ -281,6 +281,44 @@
   .copy-btn.copied { border-color: var(--accent); color: var(--accent); }
   .copy-btn.show { display: block; }
 
+
+  /* Sequential testing */
+  .seq-toggle-row { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+  .seq-toggle-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .seq-chevron { font-family: var(--mono); font-size: 12px; color: var(--muted); transition: transform 0.2s; }
+  .seq-chevron.open { transform: rotate(90deg); }
+  .seq-body { display: none; margin-top: 16px; }
+  .seq-body.open { display: block; }
+
+  .seq-config { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  @media (max-width: 480px) { .seq-config { grid-template-columns: 1fr; } }
+
+  .method-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .m-btn {
+    padding: 7px 14px; border-radius: 7px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--muted); font-family: var(--mono);
+    font-size: 11px; cursor: pointer; transition: all 0.15s; letter-spacing: 0.03em;
+  }
+  .m-btn:hover { border-color: var(--border-hover); color: var(--text); }
+  .m-btn.active { background: var(--accent-dim); border-color: var(--accent-border); color: var(--accent); }
+  .method-link { font-family: var(--mono); font-size: 11px; color: var(--muted); text-decoration: none; margin-left: 6px; opacity: 0.7; transition: opacity 0.15s; white-space: nowrap; }
+  .method-link:hover { opacity: 1; color: var(--accent); }
+
+  .seq-summary {
+    background: var(--accent-dim); border: 1px solid var(--accent-border);
+    border-radius: 10px; padding: 12px 16px; margin-bottom: 14px;
+    font-family: var(--mono); font-size: 12px; color: rgba(200,240,96,0.85); line-height: 1.7;
+  }
+  .seq-summary strong { color: var(--accent); }
+
+  .seq-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; }
+  .seq-table th { text-align: right; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 0 8px 10px; font-weight: 400; border-bottom: 1px solid var(--border); }
+  .seq-table th:first-child { text-align: center; }
+  .seq-table td { padding: 10px 8px; border-bottom: 1px solid var(--border); color: var(--text); text-align: right; }
+  .seq-table td:first-child { text-align: center; color: var(--muted); }
+  .seq-table tr:last-child td { border-bottom: none; color: var(--accent); font-weight: 500; }
+  .seq-table .decision { color: var(--muted); font-size: 11px; }
+
   footer {
     margin-top: 48px;
     font-size: 11px;
@@ -404,6 +442,54 @@
     <div class="formula-box" id="formula-out"></div>
   </div>
 
+  <!-- Sequential testing -->
+  <div class="card" id="seqCard" style="display:none;">
+    <div class="seq-toggle-row" onclick="toggleSeq()">
+      <span class="seq-toggle-label">Sequential testing plan</span>
+      <span class="seq-chevron" id="seqChevron">›</span>
+    </div>
+    <div class="seq-body" id="seqBody">
+
+      <div class="seq-config">
+        <div class="field">
+          <label>Number of peeks <span class="tip" data-title="Number of interim looks" data-tip="How many times you will check results before the test ends. Each peek costs you statistical power — the boundaries adjust to keep your false positive rate controlled.">?</span></label>
+          <select id="seqPeeks" onchange="calcSeq()">
+            <option value="2">2 peeks</option>
+            <option value="3">3 peeks</option>
+            <option value="4" selected>4 peeks</option>
+            <option value="5">5 peeks</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Boundary method <span class="tip" data-title="Spending function" data-tip="Controls how your alpha budget is spent across looks. O'Brien-Fleming is strict early and lenient late. Pocock uses equal boundaries at every look.">?</span></label>
+          <div class="method-row">
+            <button class="m-btn active" id="btn-obf" onclick="setMethod('obf')">O'Brien-Fleming</button>
+            <button class="m-btn" id="btn-poc" onclick="setMethod('poc')">Pocock</button>
+            <a class="method-link" href="https://www.evanmiller.org/how-not-to-run-an-ab-test.html" target="_blank">Not sure? Read this →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="seq-summary" id="seqSummary"></div>
+
+      <table class="seq-table">
+        <thead>
+          <tr>
+            <th>Look</th>
+            <th>Sample / group</th>
+            <th>Fraction</th>
+            <th>Z-boundary (±)</th>
+            <th>Sig at peek</th>
+            <th>Decision rule</th>
+            <th>B must reach</th>
+            <th>Remaining</th>
+          </tr>
+        </thead>
+        <tbody id="seqBody2"></tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 
 <footer>Test Right &bull; Sample Size Calculator &bull; <a href='index.html' style='color:var(--muted);'>← all tools</a></footer>
@@ -496,6 +582,8 @@ function calc() {
   const var_ = (p1*(1-p1) + p2*(1-p2)).toFixed(6);
   const den  = (mde**2).toFixed(8);
   document.getElementById('copyBtn').classList.add('show');
+  document.getElementById('seqCard').style.display = 'block';
+  if (document.getElementById('seqBody').classList.contains('open')) calcSeq();
   document.getElementById("formula-out").innerHTML =
     `n = <span class="hl">(Z${tails===2?'α/2':'α'} + Zβ)²</span> × [p₁(1-p₁) + p₂(1-p₂)] / (p₂ - p₁)²<br>` +
     `n = <span class="hl">(${za.toFixed(3)} + ${zb.toFixed(3)})²</span> × [${(p1*(1-p1)).toFixed(6)} + ${(p2*(1-p2)).toFixed(6)}] / ${den}<br>` +
@@ -536,6 +624,116 @@ function copyResults() {
     btn.classList.add('copied');
     setTimeout(() => { btn.textContent = '⎘ Copy results'; btn.classList.remove('copied'); }, 2500);
   });
+}
+
+
+let seqMethod = 'obf';
+
+function toggleSeq() {
+  const body = document.getElementById('seqBody');
+  const chevron = document.getElementById('seqChevron');
+  body.classList.toggle('open');
+  chevron.classList.toggle('open');
+  if (body.classList.contains('open')) calcSeq();
+}
+
+function setMethod(m) {
+  seqMethod = m;
+  document.getElementById('btn-obf').classList.toggle('active', m === 'obf');
+  document.getElementById('btn-poc').classList.toggle('active', m === 'poc');
+  calcSeq();
+}
+
+// O'Brien-Fleming z-boundaries (precomputed for K=2..5)
+// Using standard approximation: z(t) = z_alpha / sqrt(t) for OBF
+// Pocock: equal boundaries, adjusted for multiple looks
+function getZBoundaries(K, alpha, tails) {
+  const looks = Array.from({length: K}, (_, i) => (i + 1) / K);
+  let bounds = [];
+
+  if (seqMethod === 'obf') {
+    // OBF: z_k = z_final / sqrt(t_k), where z_final is chosen so overall alpha is maintained
+    // Approximation: use final boundary tables
+    const obfFinal = {
+      2: { '0.05': 1.977, '0.01': 2.772, '0.10': 1.678 },
+      3: { '0.05': 1.993, '0.01': 2.800, '0.10': 1.694 },
+      4: { '0.05': 2.004, '0.01': 2.816, '0.10': 1.704 },
+      5: { '0.05': 2.013, '0.01': 2.828, '0.10': 1.712 },
+    };
+    const zFinal = obfFinal[K][alpha] || 2.004;
+    bounds = looks.map(t => zFinal / Math.sqrt(t));
+  } else {
+    // Pocock: equal boundaries, derived from spending function
+    const pocFinal = {
+      2: { '0.05': 2.178, '0.01': 2.772, '0.10': 1.875 },
+      3: { '0.05': 2.289, '0.01': 3.019, '0.10': 1.992 },
+      4: { '0.05': 2.361, '0.01': 3.143, '0.10': 2.067 },
+      5: { '0.05': 2.413, '0.01': 3.226, '0.10': 2.122 },
+    };
+    const zEqual = pocFinal[K][alpha] || 2.361;
+    bounds = looks.map(() => zEqual);
+  }
+  return { looks, bounds };
+}
+
+// p-value from z (two-sided approx)
+function zToP(z) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const d = 0.3989422820 * Math.exp(-z * z / 2);
+  const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.7814779 + t * (-1.8212560 + t * 1.3302744))));
+  const oneTail = Math.abs(z) > 0 ? (z > 0 ? 1 - p : p) : 0.5;
+  return 2 * Math.min(oneTail, 1 - oneTail);
+}
+
+function calcSeq() {
+  const nEl = document.getElementById('n-out').textContent;
+  if (nEl === '—') return;
+  const nFull = parseInt(nEl.replace(/,/g,''));
+  const K = parseInt(document.getElementById('seqPeeks').value);
+  const alpha = document.getElementById('alpha').value;
+  const p1 = parseFloat(document.getElementById('baseline').value) / 100;
+  const mde = parseFloat(document.getElementById('mde').value) / 100;
+  const p2 = p1 + mde;
+
+  const { looks, bounds } = getZBoundaries(K, alpha, tails);
+  const finalZ = bounds[K - 1];
+  const standardZ = tails === 2 ? Z_ALPHA.two[alpha] : Z_ALPHA.one[alpha];
+  const cost = (finalZ - standardZ).toFixed(3);
+
+  // Summary
+  document.getElementById('seqSummary').innerHTML =
+    `<strong>${seqMethod === 'obf' ? 'O'Brien-Fleming' : 'Pocock'} boundaries · ${K} looks.</strong> ` +
+    `Final threshold: Z ≥ ${finalZ.toFixed(3)} vs ${standardZ.toFixed(3)} without peeking. ` +
+    `Cost of peeking: <strong>+${cost} Z-score units</strong> at the final look. ` +
+    (seqMethod === 'obf'
+      ? 'Early boundaries are strict — you need a very strong signal to stop early.'
+      : 'Equal boundaries at every look — easier to explain but more conservative overall.');
+
+  // Table rows
+  const tbody = document.getElementById('seqBody2');
+  tbody.innerHTML = looks.map((t, i) => {
+    const nAtLook = Math.ceil(nFull * t);
+    const zBound = bounds[i];
+    const pAtLook = zToP(zBound).toFixed(4);
+    const remaining = nFull - nAtLook;
+    // Min rate B must reach to trigger stop: p2 such that z >= zBound
+    // z = (pB - p1) / sqrt(p_pool*(1-p_pool)*(2/nAtLook))
+    // Approximate: pB >= p1 + zBound * sqrt(2*p1*(1-p1)/nAtLook)
+    const se = Math.sqrt(2 * p1 * (1 - p1) / nAtLook);
+    const bMust = Math.min(99.99, (p1 + zBound * se) * 100);
+    const isLast = i === K - 1;
+
+    return `<tr>
+      <td>${i + 1}</td>
+      <td>${nAtLook.toLocaleString()}</td>
+      <td>${Math.round(t * 100)}%</td>
+      <td>±${zBound.toFixed(3)}</td>
+      <td>${parseFloat(pAtLook) < 0.0001 ? '< 0.0001' : pAtLook}</td>
+      <td class="decision">Stop if Z ≥ ${zBound.toFixed(3)}</td>
+      <td>≥ ${bMust.toFixed(2)}%</td>
+      <td>${isLast ? '—' : remaining.toLocaleString()}</td>
+    </tr>`;
+  }).join('');
 }
 
 ["alpha","power","baseline","mde"].forEach(id =>
