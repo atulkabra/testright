@@ -351,6 +351,31 @@ function showResults() {
     }
   });
 
+  // Hard constraint: if Q1 answer is "No randomization" (option C, index 2),
+  // A/B, Bayesian, and Sequential are impossible — zero them out completely
+  if (answers[0] === 2) {
+    totals.ab = 0;
+    totals.bayesian = 0;
+    totals.sequential = 0;
+  }
+
+  // Hard constraint: if Q1 answer is "Full randomization" (option A, index 0),
+  // observational methods are not needed — reduce their scores significantly
+  if (answers[0] === 0) {
+    totals.did = Math.min(totals.did, 1);
+    totals.synth = Math.min(totals.synth, 1);
+    totals.prepost = Math.min(totals.prepost, 1);
+  }
+
+  // Hard constraint: if Q5 "No control group at all" (index 2),
+  // A/B and Bayesian require a control — zero them
+  if (answers[4] === 2) {
+    totals.ab = 0;
+    totals.bayesian = 0;
+    totals.sequential = 0;
+    totals.did = 0;
+  }
+
   // Sort and take top 3
   const maxScore = Math.max(...Object.values(totals));
   const ranked = Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 3);
