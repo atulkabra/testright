@@ -17,25 +17,25 @@
     --amber: #f0c060; --amber-dim: rgba(240,192,96,0.1); --amber-border: rgba(240,192,96,0.25);
     --mono: 'DM Mono', monospace; --sans: 'DM Sans', sans-serif;
   }
-  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 300; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 64px 16px 80px; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 300; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 36px 24px 60px; }
 
-  nav { width: 100%; max-width: 800px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 80px; }
+  nav { width: 100%; max-width: 1100px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 36px; }
   .nav-logo { font-family: var(--mono); font-size: 13px; color: var(--accent); letter-spacing: 0.08em; }
   .nav-tag { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.06em; }
 
-  .hero { text-align: center; max-width: 560px; margin-bottom: 64px; }
+  .hero { text-align: center; max-width: 560px; margin-bottom: 36px; }
   .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
   h1 { font-size: clamp(32px, 6vw, 52px); font-weight: 300; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 16px; }
   h1 strong { font-weight: 500; }
   .hero-sub { font-size: 15px; color: var(--muted); line-height: 1.7; max-width: 420px; margin: 0 auto; }
 
-  .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; max-width: 800px; }
+  .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 1100px; }
   @media (max-width: 580px) { .tools { grid-template-columns: 1fr; } }
 
   .tool-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
-    padding: 32px 28px; cursor: pointer; text-decoration: none; color: inherit;
-    display: flex; flex-direction: column; gap: 0;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px 18px; cursor: pointer; text-decoration: none; color: inherit;
+    display: flex; flex-direction: column; gap: 10px;
     transition: border-color 0.2s, background 0.2s;
     position: relative; overflow: hidden;
   }
@@ -43,19 +43,21 @@
   .tool-card.accent-card:hover { border-color: var(--accent-border); }
   .tool-card.blue-card:hover { border-color: var(--blue-border); }
 
-  .tool-icon { font-size: 28px; margin-bottom: 20px; }
-  .tool-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px; }
+  .tool-icon { font-size: 16px; flex-shrink: 0; }
+  .card-top { display: flex; align-items: center; gap: 10px; }
+  .tool-meta {}
+  .tool-tag { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
   .accent-card .tool-tag { color: var(--accent); }
   .blue-card .tool-tag { color: var(--blue); }
-  .tool-name { font-size: 22px; font-weight: 500; letter-spacing: -0.02em; margin-bottom: 10px; line-height: 1.2; }
-  .tool-desc { font-size: 14px; color: var(--muted); line-height: 1.65; margin-bottom: 28px; flex: 1; }
+  .tool-name { font-size: 15px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.2; color: var(--text); }
+  .tool-desc { font-size: 12px; color: var(--muted); line-height: 1.55; }
 
-  .tool-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 28px; }
-  .pill { font-family: var(--mono); font-size: 10px; padding: 3px 9px; border-radius: 5px; letter-spacing: 0.04em; }
+  .tool-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+  .pill { font-family: var(--mono); font-size: 9px; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.03em; }
   .accent-card .pill { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-border); }
   .blue-card .pill { background: var(--blue-dim); color: var(--blue); border: 1px solid var(--blue-border); }
 
-  .tool-cta { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; }
+  .tool-cta { font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; margin-top: auto; }
   .accent-card .tool-cta { color: var(--accent); }
   .blue-card .tool-cta { color: var(--blue); }
   .purple-card:hover { border-color: var(--purple-border); }
@@ -68,6 +70,7 @@
   .amber-card .tool-cta { color: var(--amber); }
   .arrow { transition: transform 0.2s; }
   .tool-card:hover .arrow { transform: translateX(4px); }
+  .tool-card-placeholder { border: 1.5px dashed rgba(255,255,255,0.07); background: transparent; border-radius: 14px; display: flex; align-items: center; justify-content: center; min-height: 160px; }
 
   .stats-row { display: flex; gap: 32px; margin-top: 64px; }
   .stat { text-align: center; }
@@ -86,79 +89,78 @@
 
 <div class="hero">
   <h1>Ship tests.<br><strong>Not guesses.</strong></h1>
-  <p class="hero-sub">Five sharp tools for experimenters. Pick the right test, size it, validate randomization, and track probability live.</p>
+  <p class="hero-sub">Six tools. Full experiment lifecycle. Free, no login.</p>
 </div>
 
 <div class="tools" style="grid-template-columns: repeat(3, 1fr);">
 
   <a class="tool-card purple-card" href="find-test.html">
-    <div class="tool-icon">🧭</div>
-    <p class="tool-tag">Tool 01</p>
-    <h2 class="tool-name">Find the Right Test</h2>
-    <p class="tool-desc">Not sure which method fits? Answer 5 questions. Get your top 3 recommended testing methodologies with a clear explanation of why.</p>
-    <div class="tool-pills">
-      <span class="pill">A/B Test</span>
-      <span class="pill">Bayesian</span>
-      <span class="pill">DiD</span>
-      <span class="pill">Synthetic Control</span>
+    <div class="card-top">
+      <span class="tool-icon">🧭</span>
+      <div class="tool-meta">
+        <p class="tool-tag">Tool 01</p>
+        <h2 class="tool-name">Find the Right Test</h2>
+      </div>
     </div>
+    <p class="tool-desc">Answer 5 questions. Get your top 3 recommended methodologies with a clear explanation of why.</p>
     <div class="tool-cta">Find my test <span class="arrow">→</span></div>
   </a>
 
   <a class="tool-card blue-card" href="sample-size.html">
-    <div class="tool-icon">📐</div>
-    <p class="tool-tag">Tool 02</p>
-    <h2 class="tool-name">Sample Size Calculator</h2>
-    <p class="tool-desc">Know how many users you need before you start — not after. Set your baseline, MDE, and confidence level. Get the number.</p>
-    <div class="tool-pills">
-      <span class="pill">Baseline rate</span>
-      <span class="pill">MDE</span>
-      <span class="pill">Power analysis</span>
-      <span class="pill">Full comparison</span>
+    <div class="card-top">
+      <span class="tool-icon">📐</span>
+      <div class="tool-meta">
+        <p class="tool-tag">Tool 02</p>
+        <h2 class="tool-name">Sample Size Calculator</h2>
+      </div>
     </div>
+    <p class="tool-desc">Know how many users you need before you start. Set baseline, MDE, and confidence level. Get the number.</p>
     <div class="tool-cta">Open calculator <span class="arrow">→</span></div>
   </a>
 
   <a class="tool-card amber-card" href="srm.html">
-    <div class="tool-icon">🔍</div>
-    <p class="tool-tag">Tool 03</p>
-    <h2 class="tool-name">SRM Checker</h2>
-    <p class="tool-desc">Sample Ratio Mismatch kills experiments silently. Detect broken randomization before you trust your results — and find out why it happened.</p>
-    <div class="tool-pills">
-      <span class="pill">Chi-square test</span>
-      <span class="pill">Expected vs actual</span>
-      <span class="pill">Common causes</span>
+    <div class="card-top">
+      <span class="tool-icon">🔍</span>
+      <div class="tool-meta">
+        <p class="tool-tag">Tool 03</p>
+        <h2 class="tool-name">SRM Checker</h2>
+      </div>
     </div>
+    <p class="tool-desc">Detect broken randomization before you trust your results — and find out why it happened.</p>
     <div class="tool-cta">Check my split <span class="arrow">→</span></div>
   </a>
 
   <a class="tool-card accent-card" href="stat-sig.html">
-    <div class="tool-icon">⚡</div>
-    <p class="tool-tag">Tool 04</p>
-    <h2 class="tool-name">Stat Sig Calculator</h2>
-    <p class="tool-desc">Paste your control and treatment numbers. Know in seconds if your result is real or just noise. Includes p-value, confidence interval, and lift.</p>
-    <div class="tool-pills">
-      <span class="pill">Two-proportion Z-test</span>
-      <span class="pill">One &amp; two sided</span>
-      <span class="pill">P-value</span>
-      <span class="pill">95% CI</span>
+    <div class="card-top">
+      <span class="tool-icon">⚡</span>
+      <div class="tool-meta">
+        <p class="tool-tag">Tool 04</p>
+        <h2 class="tool-name">Stat Sig Calculator</h2>
+      </div>
     </div>
+    <p class="tool-desc">Know in seconds if your result is real or noise. Includes p-value, confidence interval, and lift.</p>
     <div class="tool-cta">Open calculator <span class="arrow">→</span></div>
   </a>
 
   <a class="tool-card purple-card" href="bayesian.html">
-    <div class="tool-icon">🔮</div>
-    <p class="tool-tag">Tool 05</p>
-    <h2 class="tool-name">Bayesian A/B Monitor</h2>
-    <p class="tool-desc">Track the probability your treatment is winning — as data arrives. Set your priors, enter live data, get a ship / wait / stop verdict. No fixed sample size required.</p>
-    <div class="tool-pills">
-      <span class="pill">Beta distribution</span>
-      <span class="pill">P(B &gt; A)</span>
-      <span class="pill">Expected loss</span>
-      <span class="pill">Posterior curve</span>
+    <div class="card-top">
+      <span class="tool-icon">🔮</span>
+      <div class="tool-meta">
+        <p class="tool-tag">Tool 05</p>
+        <h2 class="tool-name">Bayesian A/B Monitor</h2>
+      </div>
     </div>
+    <p class="tool-desc">Track probability your treatment is winning as data arrives. Ship / wait / stop verdict. No fixed sample needed.</p>
     <div class="tool-cta">Open monitor <span class="arrow">→</span></div>
   </a>
+
+  <div class="tool-card-placeholder">
+    <div style="text-align:center;">
+      <div style="font-size:20px;margin-bottom:8px;opacity:0.25;">+</div>
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#333;">Coming soon</div>
+      <div style="font-size:12px;color:#2a2a2a;margin-top:4px;font-family:var(--mono);">Readout Reviewer</div>
+    </div>
+  </div>
 
 </div>
 
