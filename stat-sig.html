@@ -140,6 +140,36 @@
   .nav-back { font-family: var(--mono); font-size: 12px; color: var(--muted); text-decoration: none; letter-spacing: 0.04em; transition: color 0.15s; }
   .nav-back:hover { color: var(--text); }
 
+
+  .tip {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 1px solid #444; color: #7a7f8a; font-size: 9px;
+    cursor: pointer; margin-left: 5px; vertical-align: middle;
+    font-family: var(--mono); flex-shrink: 0;
+  }
+  .tip:hover { border-color: var(--accent); color: var(--accent); }
+  #tt-popup {
+    display: none; position: absolute; z-index: 999;
+    background: #0e0f11; border: 1px solid rgba(200,240,96,0.28);
+    border-radius: 10px; padding: 10px 14px; max-width: 240px;
+    pointer-events: none;
+  }
+  #tt-popup .tt-title { font-family: var(--mono); font-size: 11px; color: var(--accent); margin-bottom: 4px; letter-spacing: 0.04em; }
+  #tt-popup .tt-body { font-size: 12px; color: #9a9fa8; line-height: 1.6; font-family: var(--sans); font-weight: 300; }
+
+
+  .copy-btn {
+    display: none; width: 100%; margin-top: 12px; padding: 12px;
+    border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+    background: transparent; color: var(--muted); font-family: var(--mono);
+    font-size: 12px; cursor: pointer; letter-spacing: 0.04em;
+    transition: all 0.18s; text-align: center;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.show { display: block; }
+
   footer { margin-top: 48px; font-size: 11px; font-family: var(--mono); color: var(--muted); letter-spacing: 0.05em; opacity: 0.5; text-align: center; }
 </style>
 </head>
@@ -164,14 +194,14 @@
     <p class="card-label">Test configuration</p>
     <div class="grid-2">
       <div class="field">
-        <label>Test type</label>
+        <label>Test type <span class="tip" data-title="One-sided vs two-sided" data-tip="Two-sided tests for any difference (up or down). One-sided only tests for improvement. Almost always use two-sided — it is harder to reach but more trustworthy.">?</span></label>
         <div class="toggle-wrap">
           <button class="t-btn" id="btn-one" onclick="setTails(1)">One-sided</button>
           <button class="t-btn active" id="btn-two" onclick="setTails(2)">Two-sided</button>
         </div>
       </div>
       <div class="field">
-        <label>Significance threshold (α)</label>
+        <label>Significance threshold (α) <span class="tip" data-title="Significance level — α" data-tip="Your acceptable false positive rate. At 0.05, you will incorrectly call a winner 5% of the time when there is no real effect.">?</span></label>
         <select id="alpha">
           <option value="0.10">90% confidence (α = 0.10)</option>
           <option value="0.05" selected>95% confidence (α = 0.05)</option>
@@ -188,11 +218,11 @@
       <div class="group-box">
         <p class="group-title">Control (A)</p>
         <div class="field" style="margin-bottom:10px;">
-          <label>Denominator — Visitors / Impressions</label>
+          <label>Denominator — Visitors / Impressions <span class="tip" data-title="Total exposed users" data-tip="Everyone assigned to this variant — whether they converted or not. This is your sample size, not your conversion count.">?</span></label>
           <input type="number" id="n_a" value="10000" min="1" step="1">
         </div>
         <div class="field">
-          <label>Numerator — Conversions / Events</label>
+          <label>Numerator — Conversions / Events <span class="tip" data-title="Conversion count" data-tip="The number of users who completed the goal action — purchase, signup, click, etc. Must be less than or equal to your denominator.">?</span></label>
           <input type="number" id="c_a" value="885" min="0" step="1">
           <p class="hint" id="rate_a_hint">Rate: 8.85%</p>
         </div>
@@ -200,11 +230,11 @@
       <div class="group-box">
         <p class="group-title">Treatment (B)</p>
         <div class="field" style="margin-bottom:10px;">
-          <label>Denominator — Visitors / Impressions</label>
+          <label>Denominator — Visitors / Impressions <span class="tip" data-title="Total exposed users" data-tip="Everyone assigned to this variant — whether they converted or not. This is your sample size, not your conversion count.">?</span></label>
           <input type="number" id="n_b" value="10000" min="1" step="1">
         </div>
         <div class="field">
-          <label>Numerator — Conversions / Events</label>
+          <label>Numerator — Conversions / Events <span class="tip" data-title="Conversion count" data-tip="The number of users who completed the goal action — purchase, signup, click, etc. Must be less than or equal to your denominator.">?</span></label>
           <input type="number" id="c_b" value="920" min="0" step="1">
           <p class="hint" id="rate_b_hint">Rate: 9.20%</p>
         </div>
@@ -223,9 +253,9 @@
     <p class="card-label">Test statistics</p>
     <div class="grid-4">
       <div class="chip"><span class="chip-label">Z-score</span><span class="chip-val" id="z-out">—</span></div>
-      <div class="chip"><span class="chip-label" id="z-crit-label">Z critical (α/2)</span><span class="chip-val" id="z-crit-out">—</span></div>
+      <div class="chip"><span class="chip-label" id="z-crit-label">Z critical <span class="tip" data-title="Critical threshold" data-tip="Your Z statistic must exceed this to be significant. At 95% two-sided confidence, this is ±1.96. Think of it as the finish line.">?</span></span><span class="chip-val" id="z-crit-out">—</span></div>
       <div class="chip"><span class="chip-label">P-value</span><span class="chip-val" id="pval-out">—</span></div>
-      <div class="chip"><span class="chip-label">Relative lift</span><span class="chip-val" id="lift-out">—</span></div>
+      <div class="chip"><span class="chip-label">Relative lift <span class="tip" data-title="Relative lift" data-tip="Percentage improvement of treatment over control. A +5% lift means treatment converts 5% more relatively — not 5 percentage points more.">?</span></span><span class="chip-val" id="lift-out">—</span></div>
     </div>
 
     <!-- P-value bar -->
@@ -278,6 +308,8 @@
     </table>
   </div>
 
+  <button class="copy-btn" id="copyBtn" onclick="copyResults()">⎘ Copy results</button>
+
   <!-- Formula -->
   <div class="card">
     <p class="card-label">Formula breakdown</p>
@@ -286,7 +318,7 @@
 
 </div>
 
-<footer>testright toolkit &bull; stat sig calculator &bull; <a href='index.html' style='color:var(--muted);'>← all tools</a></footer>
+<footer>Test Right &bull; Stat Sig Calculator &bull; <a href='index.html' style='color:var(--muted);'>← all tools</a></footer>
 
 <script>
 let tails = 2;
@@ -446,6 +478,7 @@ function calc() {
   }).join("");
 
   // Formula
+  document.getElementById('copyBtn').classList.add('show');
   document.getElementById("formula-out").innerHTML =
     `p_pool = (${c_a} + ${c_b}) / (${n_a} + ${n_b}) = <span class="hl">${(p_pool*100).toFixed(4)}%</span><br>` +
     `SE = √[p_pool × (1−p_pool) × (1/n_A + 1/n_B)] = <span class="hl">${se.toFixed(6)}</span><br>` +
@@ -453,10 +486,82 @@ function calc() {
     `p-value (${tails === 2 ? "two" : "one"}-sided) = <span class="hl">${fmtPval(pval)}</span> ${isSig ? "< " : "≥ "} α = ${alpha}`;
 }
 
+
+function copyResults() {
+  const verdict = document.getElementById('verdict-text').textContent;
+  const detail = document.getElementById('verdict-detail').textContent;
+  const z = document.getElementById('z-out').textContent;
+  const pval = document.getElementById('pval-out').textContent;
+  const lift = document.getElementById('lift-out').textContent;
+  const diff = document.getElementById('diff-out').textContent;
+  const ciLo = document.getElementById('ci-lo-out').textContent;
+  const ciHi = document.getElementById('ci-hi-out').textContent;
+  const nA = document.getElementById('n_a').value;
+  const cA = document.getElementById('c_a').value;
+  const nB = document.getElementById('n_b').value;
+  const cB = document.getElementById('c_b').value;
+  const alpha = document.getElementById('alpha');
+  const alphaLabel = alpha.options[alpha.selectedIndex].text;
+  const testType = tails === 1 ? 'One-sided' : 'Two-sided';
+  const rateA = nA > 0 ? ((cA/nA)*100).toFixed(2) + '%' : '—';
+  const rateB = nB > 0 ? ((cB/nB)*100).toFixed(2) + '%' : '—';
+
+  const text = [
+    '── Stat Sig Results ──',
+    `Test type:       ${testType}`,
+    `Confidence:      ${alphaLabel}`,
+    ``,
+    `Control:         ${parseInt(nA).toLocaleString()} users · ${parseInt(cA).toLocaleString()} conversions · ${rateA}`,
+    `Treatment:       ${parseInt(nB).toLocaleString()} users · ${parseInt(cB).toLocaleString()} conversions · ${rateB}`,
+    ``,
+    `Verdict:         ${verdict}`,
+    `Z statistic:     ${z}`,
+    `p-value:         ${pval}`,
+    `Absolute diff:   ${diff}`,
+    `Relative lift:   ${lift}`,
+    `95% CI:          [${ciLo}, ${ciHi}]`,
+    ``,
+    `${detail}`,
+    ``,
+    `Generated by Test Right · testright-toolkit.vercel.app`
+  ].join('\n');
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ Copied to clipboard';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '⎘ Copy results'; btn.classList.remove('copied'); }, 2500);
+  });
+}
+
 ["alpha","n_a","c_a","n_b","c_b"].forEach(id =>
   document.getElementById(id).addEventListener("input", calc)
 );
 calc();
 </script>
+
+<div id="tt-popup"><div class="tt-title" id="tt-title"></div><div class="tt-body" id="tt-body"></div></div>
+<script>
+(function(){
+  const pop = document.getElementById('tt-popup');
+  const ttTitle = document.getElementById('tt-title');
+  const ttBody = document.getElementById('tt-body');
+  document.querySelectorAll('.tip').forEach(el => {
+    el.addEventListener('mouseenter', e => {
+      ttTitle.textContent = el.dataset.title || '';
+      ttBody.textContent = el.dataset.tip || '';
+      pop.style.display = 'block';
+      const r = el.getBoundingClientRect();
+      let left = r.left + window.scrollX;
+      let top = r.bottom + window.scrollY + 8;
+      if (left + 250 > window.innerWidth) left = window.innerWidth - 260;
+      pop.style.left = left + 'px';
+      pop.style.top = top + 'px';
+    });
+    el.addEventListener('mouseleave', () => { pop.style.display = 'none'; });
+  });
+})();
+</script>
+
 </body>
 </html>

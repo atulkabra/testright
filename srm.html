@@ -107,6 +107,36 @@
   .badge-cur { background: var(--blue-dim); color: var(--blue); border: 1px solid var(--blue-border); }
   .highlight-row td { color: var(--amber); }
 
+
+  .tip {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 1px solid #444; color: #7a7f8a; font-size: 9px;
+    cursor: pointer; margin-left: 5px; vertical-align: middle;
+    font-family: var(--mono); flex-shrink: 0;
+  }
+  .tip:hover { border-color: var(--accent); color: var(--accent); }
+  #tt-popup {
+    display: none; position: absolute; z-index: 999;
+    background: #0e0f11; border: 1px solid rgba(200,240,96,0.28);
+    border-radius: 10px; padding: 10px 14px; max-width: 240px;
+    pointer-events: none;
+  }
+  #tt-popup .tt-title { font-family: var(--mono); font-size: 11px; color: var(--accent); margin-bottom: 4px; letter-spacing: 0.04em; }
+  #tt-popup .tt-body { font-size: 12px; color: #9a9fa8; line-height: 1.6; font-family: var(--sans); font-weight: 300; }
+
+
+  .copy-btn {
+    display: none; width: 100%; margin-top: 12px; padding: 12px;
+    border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+    background: transparent; color: var(--muted); font-family: var(--mono);
+    font-size: 12px; cursor: pointer; letter-spacing: 0.04em;
+    transition: all 0.18s; text-align: center;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.show { display: block; }
+
   footer { margin-top: 48px; font-size: 11px; font-family: var(--mono); color: var(--muted); letter-spacing: 0.05em; opacity: 0.5; text-align: center; }
 </style>
 </head>
@@ -130,7 +160,7 @@
     <p class="card-label">Test configuration</p>
     <div class="grid-2" style="margin-bottom:12px;">
       <div class="field">
-        <label>Expected split</label>
+        <label>Expected split <span class="tip" data-title="Expected traffic allocation" data-tip="The ratio you configured when setting up the experiment — usually 50/50 but can be anything. SRM compares this to what you actually observed.">?</span></label>
         <select id="split" onchange="calc()">
           <option value="50">50 / 50</option>
           <option value="60">60 / 40</option>
@@ -145,7 +175,7 @@
         <input type="number" id="custom-pct" value="50" min="1" max="99" step="1" oninput="calc()">
       </div>
       <div class="field">
-        <label>Significance threshold (α)</label>
+        <label>Significance threshold (α) <span class="tip" data-title="Significance level for SRM" data-tip="SRM checks use stricter thresholds than regular tests — usually 99% or 99.9%. Even tiny randomization errors matter because they silently corrupt all your results.">?</span></label>
         <select id="alpha" onchange="calc()">
           <option value="0.10">90% confidence (α = 0.10)</option>
           <option value="0.01" selected>99% confidence (α = 0.01)</option>
@@ -180,10 +210,10 @@
   <div class="card">
     <p class="card-label">Observed vs expected</p>
     <div class="grid-4">
-      <div class="chip"><span class="chip-label">Total users</span><span class="chip-val" id="total-out">—</span></div>
-      <div class="chip"><span class="chip-label">Expected A</span><span class="chip-val" id="exp-a-out">—</span></div>
-      <div class="chip"><span class="chip-label">Expected B</span><span class="chip-val" id="exp-b-out">—</span></div>
-      <div class="chip"><span class="chip-label">χ² statistic</span><span class="chip-val" id="chi-out">—</span></div>
+      <div class="chip"><span class="chip-label">Total users <span class="tip" data-title="Total experiment users" data-tip="Sum of users across all variants. Used to calculate how many you expected in each group.">?</span></span><span class="chip-val" id="total-out">—</span></div>
+      <div class="chip"><span class="chip-label">Expected A <span class="tip" data-title="Expected control count" data-tip="How many users should be in control if randomization worked perfectly, based on total users and your expected split.">?</span></span><span class="chip-val" id="exp-a-out">—</span></div>
+      <div class="chip"><span class="chip-label">Expected B <span class="tip" data-title="Expected treatment count" data-tip="How many users should be in treatment if randomization worked perfectly.">?</span></span><span class="chip-val" id="exp-b-out">—</span></div>
+      <div class="chip"><span class="chip-label">χ² statistic <span class="tip" data-title="Chi-square statistic" data-tip="Measures how far your observed split deviates from expected. Larger = more suspicious. Compared against a critical threshold to decide if SRM exists.">?</span></span><span class="chip-val" id="chi-out">—</span></div>
     </div>
   </div>
 
@@ -248,6 +278,8 @@
     </div>
   </div>
 
+  <button class="copy-btn" id="copyBtn" onclick="copyResults()">⎘ Copy results</button>
+
   <!-- Formula -->
   <div class="card">
     <p class="card-label">Formula breakdown</p>
@@ -256,7 +288,7 @@
 
 </div>
 
-<footer>experimentation toolkit &bull; srm checker &bull; <a href="index.html" style="color:var(--muted);">← all tools</a></footer>
+<footer>Test Right &bull; SRM Checker &bull; <a href="index.html" style="color:var(--muted);">← all tools</a></footer>
 
 <script>
 // Chi-square critical values for df=1
@@ -394,6 +426,7 @@ function calc() {
   }).join('');
 
   // Formula
+  document.getElementById('copyBtn').classList.add('show');
   document.getElementById('formula-out').innerHTML =
     `Expected A = ${fmt(total)} × ${fmtPct(pctA)} = <span class="hl">${fmt(exp_a)}</span><br>` +
     `Expected B = ${fmt(total)} × ${fmtPct(pctB)} = <span class="hl">${fmt(exp_b)}</span><br>` +
@@ -402,6 +435,65 @@ function calc() {
 }
 
 calc();
+
+function copyResults() {
+  const verdict = document.getElementById('verdict-text').textContent;
+  const detail = document.getElementById('verdict-detail').textContent;
+  const chi = document.getElementById('chi-out').textContent;
+  const total = document.getElementById('total-out').textContent;
+  const expA = document.getElementById('exp-a-out').textContent;
+  const expB = document.getElementById('exp-b-out').textContent;
+  const nA = document.getElementById('n_a').value;
+  const nB = document.getElementById('n_b').value;
+  const alpha = document.getElementById('alpha');
+  const alphaLabel = alpha.options[alpha.selectedIndex].text;
+
+  const text = [
+    '── SRM Check Results ──',
+    `Threshold:       ${alphaLabel}`,
+    `Total users:     ${total}`,
+    `Control observed:   ${parseInt(nA).toLocaleString()}  |  Expected: ${expA}`,
+    `Treatment observed: ${parseInt(nB).toLocaleString()}  |  Expected: ${expB}`,
+    `Chi-square (χ²): ${chi}`,
+    ``,
+    `Verdict: ${verdict}`,
+    `${detail}`,
+    ``,
+    `Generated by Test Right · testright-toolkit.vercel.app`
+  ].join('\n');
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ Copied to clipboard';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '⎘ Copy results'; btn.classList.remove('copied'); }, 2500);
+  });
+}
+
 </script>
+
+<div id="tt-popup"><div class="tt-title" id="tt-title"></div><div class="tt-body" id="tt-body"></div></div>
+<script>
+(function(){
+  const pop = document.getElementById('tt-popup');
+  const ttTitle = document.getElementById('tt-title');
+  const ttBody = document.getElementById('tt-body');
+  document.querySelectorAll('.tip').forEach(el => {
+    el.addEventListener('mouseenter', e => {
+      ttTitle.textContent = el.dataset.title || '';
+      ttBody.textContent = el.dataset.tip || '';
+      pop.style.display = 'block';
+      const r = el.getBoundingClientRect();
+      let left = r.left + window.scrollX;
+      let top = r.bottom + window.scrollY + 8;
+      if (left + 250 > window.innerWidth) left = window.innerWidth - 260;
+      pop.style.left = left + 'px';
+      pop.style.top = top + 'px';
+    });
+    el.addEventListener('mouseleave', () => { pop.style.display = 'none'; });
+  });
+})();
+</script>
+
 </body>
 </html>

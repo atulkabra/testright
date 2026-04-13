@@ -126,6 +126,24 @@
   }
   .restart-btn:hover { background: var(--purple-dim); }
 
+
+  .tip {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 1px solid #444; color: #7a7f8a; font-size: 9px;
+    cursor: pointer; margin-left: 5px; vertical-align: middle;
+    font-family: var(--mono); flex-shrink: 0;
+  }
+  .tip:hover { border-color: var(--accent); color: var(--accent); }
+  #tt-popup {
+    display: none; position: absolute; z-index: 999;
+    background: #0e0f11; border: 1px solid rgba(200,240,96,0.28);
+    border-radius: 10px; padding: 10px 14px; max-width: 240px;
+    pointer-events: none;
+  }
+  #tt-popup .tt-title { font-family: var(--mono); font-size: 11px; color: var(--accent); margin-bottom: 4px; letter-spacing: 0.04em; }
+  #tt-popup .tt-body { font-size: 12px; color: #9a9fa8; line-height: 1.6; font-family: var(--sans); font-weight: 300; }
+
   footer { margin-top: 64px; font-size: 11px; font-family: var(--mono); color: var(--muted); letter-spacing: 0.05em; opacity: 0.4; text-align: center; }
 </style>
 </head>
@@ -179,7 +197,7 @@
 
 </div>
 
-<footer>experimentation toolkit &bull; find the right test &bull; <a href="index.html" style="color:var(--muted);">← all tools</a></footer>
+<footer>Test Right &bull; Find the Right Test &bull; <a href="index.html" style="color:var(--muted);">← all tools</a></footer>
 
 <script>
 const questions = [
@@ -372,5 +390,29 @@ function restart() {
 
 renderQ();
 </script>
+
+<div id="tt-popup"><div class="tt-title" id="tt-title"></div><div class="tt-body" id="tt-body"></div></div>
+<script>
+(function(){
+  const pop = document.getElementById('tt-popup');
+  const ttTitle = document.getElementById('tt-title');
+  const ttBody = document.getElementById('tt-body');
+  document.querySelectorAll('.tip').forEach(el => {
+    el.addEventListener('mouseenter', e => {
+      ttTitle.textContent = el.dataset.title || '';
+      ttBody.textContent = el.dataset.tip || '';
+      pop.style.display = 'block';
+      const r = el.getBoundingClientRect();
+      let left = r.left + window.scrollX;
+      let top = r.bottom + window.scrollY + 8;
+      if (left + 250 > window.innerWidth) left = window.innerWidth - 260;
+      pop.style.left = left + 'px';
+      pop.style.top = top + 'px';
+    });
+    el.addEventListener('mouseleave', () => { pop.style.display = 'none'; });
+  });
+})();
+</script>
+
 </body>
 </html>

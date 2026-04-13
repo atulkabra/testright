@@ -251,6 +251,36 @@
   .nav-back { font-family: var(--mono); font-size: 12px; color: var(--muted); text-decoration: none; letter-spacing: 0.04em; transition: color 0.15s; }
   .nav-back:hover { color: var(--text); }
 
+
+  .tip {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 1px solid #444; color: #7a7f8a; font-size: 9px;
+    cursor: pointer; margin-left: 5px; vertical-align: middle;
+    font-family: var(--mono); flex-shrink: 0;
+  }
+  .tip:hover { border-color: var(--accent); color: var(--accent); }
+  #tt-popup {
+    display: none; position: absolute; z-index: 999;
+    background: #0e0f11; border: 1px solid rgba(200,240,96,0.28);
+    border-radius: 10px; padding: 10px 14px; max-width: 240px;
+    pointer-events: none;
+  }
+  #tt-popup .tt-title { font-family: var(--mono); font-size: 11px; color: var(--accent); margin-bottom: 4px; letter-spacing: 0.04em; }
+  #tt-popup .tt-body { font-size: 12px; color: #9a9fa8; line-height: 1.6; font-family: var(--sans); font-weight: 300; }
+
+
+  .copy-btn {
+    display: none; width: 100%; margin-top: 12px; padding: 12px;
+    border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+    background: transparent; color: var(--muted); font-family: var(--mono);
+    font-size: 12px; cursor: pointer; letter-spacing: 0.04em;
+    transition: all 0.18s; text-align: center;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.show { display: block; }
+
   footer {
     margin-top: 48px;
     font-size: 11px;
@@ -283,14 +313,14 @@
     <p class="card-label">Test configuration</p>
     <div class="grid-2" style="margin-bottom: 12px;">
       <div class="field">
-        <label>Test type</label>
+        <label>Test type <span class="tip" data-title="One-sided vs two-sided" data-tip="Two-sided tests for improvement or regression. One-sided tests only for improvement. Use two-sided unless you have a strong prior reason not to.">?</span></label>
         <div class="toggle-wrap">
           <button class="t-btn" id="btn-one" onclick="setTails(1)">One-sided</button>
           <button class="t-btn active" id="btn-two" onclick="setTails(2)">Two-sided</button>
         </div>
       </div>
       <div class="field">
-        <label>Significance level (α)</label>
+        <label>Significance level (α) <span class="tip" data-title="Significance level — α" data-tip="Your false positive rate. At α = 0.05, there is a 5% chance you declare a winner when there is none. Lower α = stricter test.">?</span></label>
         <select id="alpha">
           <option value="0.10">90% confidence (α = 0.10)</option>
           <option value="0.05" selected>95% confidence (α = 0.05)</option>
@@ -300,7 +330,7 @@
     </div>
     <div class="grid-3">
       <div class="field">
-        <label>Statistical power</label>
+        <label>Statistical power <span class="tip" data-title="Statistical power (1−β)" data-tip="Your chance of detecting a real effect. At 80% power, you correctly identify a true winner 4 out of 5 times. Higher power needs more users.">?</span></label>
         <select id="power">
           <option value="0.80" selected>80%</option>
           <option value="0.85">85%</option>
@@ -309,11 +339,11 @@
         </select>
       </div>
       <div class="field">
-        <label>Baseline rate (%)</label>
+        <label>Baseline rate (%) <span class="tip" data-title="Baseline conversion rate" data-tip="Your current rate before the test starts. If 88 out of 100 orders ship on time today, your baseline is 88.5%.">?</span></label>
         <input type="number" id="baseline" value="88.5" min="0.1" max="99.9" step="0.1">
       </div>
       <div class="field">
-        <label>MDE — absolute (%)</label>
+        <label>MDE — absolute (%) <span class="tip" data-title="Minimum Detectable Effect" data-tip="The smallest change worth detecting. If you only care about shifts larger than 1.5 percentage points, set MDE to 1.5. Smaller MDE = bigger sample needed.">?</span></label>
         <input type="number" id="mde" value="1.5" min="0.1" max="50" step="0.1">
       </div>
     </div>
@@ -325,21 +355,21 @@
     <div class="grid-4">
       <div class="chip"><span class="chip-label">Control p₁</span><span class="chip-val" id="p1-out">88.5%</span></div>
       <div class="chip"><span class="chip-label">Treatment p₂</span><span class="chip-val" id="p2-out">90.0%</span></div>
-      <div class="chip"><span class="chip-label" id="za-label">Z α/2</span><span class="chip-val" id="z-alpha-out">1.960</span></div>
-      <div class="chip"><span class="chip-label">Z β</span><span class="chip-val" id="z-beta-out">0.842</span></div>
+      <div class="chip"><span class="chip-label" id="za-label">Z α/2 <span class="tip" data-title="Critical Z value" data-tip="How many standard deviations your result must exceed to be significant. At 95% confidence two-sided, this is 1.96.">?</span></span><span class="chip-val" id="z-alpha-out">1.960</span></div>
+      <div class="chip"><span class="chip-label">Z β <span class="tip" data-title="Power Z value" data-tip="Derived from your power setting. Higher power raises this value, increasing your required sample size but reducing missed real effects.">?</span></span><span class="chip-val" id="z-beta-out">0.842</span></div>
     </div>
   </div>
 
   <!-- Result -->
   <div class="result-card">
     <div class="result-block">
-      <p class="result-label">Per group</p>
+      <p class="result-label">Per group <span class="tip" data-title="Sample per group" data-tip="The number of users needed in EACH variant — control and treatment separately. Total experiment size is this × 2.">?</span></p>
       <p class="result-num" id="n-out">—</p>
       <p class="result-sub" id="test-type-out">two-sided</p>
     </div>
     <div class="divider-line"></div>
     <div class="result-block">
-      <p class="result-label">Total sample</p>
+      <p class="result-label">Total sample <span class="tip" data-title="Total experiment size" data-tip="All users across both groups combined. Make sure you can reach this number before your test window closes.">?</span></p>
       <p class="result-num" id="total-out">—</p>
       <p class="result-sub">both groups combined</p>
     </div>
@@ -349,6 +379,8 @@
   <div class="saving-bar" id="saving-bar">
     <span id="saving-text">—</span>
   </div>
+
+  <button class="copy-btn" id="copyBtn" onclick="copyResults()">⎘ Copy results</button>
 
   <!-- Comparison table -->
   <div class="card">
@@ -374,7 +406,7 @@
 
 </div>
 
-<footer>testright toolkit &bull; sample size calculator &bull; <a href='index.html' style='color:var(--muted);'>← all tools</a></footer>
+<footer>Test Right &bull; Sample Size Calculator &bull; <a href='index.html' style='color:var(--muted);'>← all tools</a></footer>
 
 <script>
 let tails = 2;
@@ -463,10 +495,47 @@ function calc() {
   const num = ((za+zb)**2).toFixed(4);
   const var_ = (p1*(1-p1) + p2*(1-p2)).toFixed(6);
   const den  = (mde**2).toFixed(8);
+  document.getElementById('copyBtn').classList.add('show');
   document.getElementById("formula-out").innerHTML =
     `n = <span class="hl">(Z${tails===2?'α/2':'α'} + Zβ)²</span> × [p₁(1-p₁) + p₂(1-p₂)] / (p₂ - p₁)²<br>` +
     `n = <span class="hl">(${za.toFixed(3)} + ${zb.toFixed(3)})²</span> × [${(p1*(1-p1)).toFixed(6)} + ${(p2*(1-p2)).toFixed(6)}] / ${den}<br>` +
     `n = <span class="hl">${num}</span> × ${var_} / ${den} = <span class="hl">${fmt(n)}</span>`;
+}
+
+
+function copyResults() {
+  const n = document.getElementById('n-out').textContent;
+  const total = document.getElementById('total-out').textContent;
+  const alpha = document.getElementById('alpha');
+  const power = document.getElementById('power');
+  const baseline = document.getElementById('baseline').value;
+  const mde = document.getElementById('mde').value;
+  const p2 = document.getElementById('p2-out').textContent;
+  const testType = tails === 1 ? 'One-sided' : 'Two-sided';
+  const alphaLabel = alpha.options[alpha.selectedIndex].text;
+  const powerLabel = power.options[power.selectedIndex].text;
+
+  const text = [
+    '── Sample Size Results ──',
+    `Test type:       ${testType}`,
+    `Confidence:      ${alphaLabel}`,
+    `Power:           ${powerLabel}`,
+    `Baseline rate:   ${baseline}%`,
+    `MDE (absolute):  ${mde}pp`,
+    `Treatment rate:  ${p2}`,
+    ``,
+    `Per group:       ${n}`,
+    `Total sample:    ${total}`,
+    ``,
+    `Generated by Test Right · testright-toolkit.vercel.app`
+  ].join('\n');
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ Copied to clipboard';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '⎘ Copy results'; btn.classList.remove('copied'); }, 2500);
+  });
 }
 
 ["alpha","power","baseline","mde"].forEach(id =>
@@ -474,5 +543,29 @@ function calc() {
 );
 calc();
 </script>
+
+<div id="tt-popup"><div class="tt-title" id="tt-title"></div><div class="tt-body" id="tt-body"></div></div>
+<script>
+(function(){
+  const pop = document.getElementById('tt-popup');
+  const ttTitle = document.getElementById('tt-title');
+  const ttBody = document.getElementById('tt-body');
+  document.querySelectorAll('.tip').forEach(el => {
+    el.addEventListener('mouseenter', e => {
+      ttTitle.textContent = el.dataset.title || '';
+      ttBody.textContent = el.dataset.tip || '';
+      pop.style.display = 'block';
+      const r = el.getBoundingClientRect();
+      let left = r.left + window.scrollX;
+      let top = r.bottom + window.scrollY + 8;
+      if (left + 250 > window.innerWidth) left = window.innerWidth - 260;
+      pop.style.left = left + 'px';
+      pop.style.top = top + 'px';
+    });
+    el.addEventListener('mouseleave', () => { pop.style.display = 'none'; });
+  });
+})();
+</script>
+
 </body>
 </html>
