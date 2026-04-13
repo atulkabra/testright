@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bayesian A/B Monitor — Experimentation Toolkit</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0e0f11; --surface: #16181c; --surface2: #1e2126;
+    --border: rgba(255,255,255,0.07); --border-hover: rgba(255,255,255,0.14);
+    --text: #f0f0ee; --muted: #7a7f8a;
+    --accent: #c8f060; --accent-dim: rgba(200,240,96,0.12); --accent-border: rgba(200,240,96,0.3);
+    --blue: #60a8f0; --blue-dim: rgba(96,168,240,0.1); --blue-border: rgba(96,168,240,0.25);
+    --purple: #a78bfa; --purple-dim: rgba(167,139,250,0.1); --purple-border: rgba(167,139,250,0.28);
+    --red: #f07060; --red-dim: rgba(240,112,96,0.1); --red-border: rgba(240,112,96,0.25);
+    --amber: #f0c060; --amber-dim: rgba(240,192,96,0.1); --amber-border: rgba(240,192,96,0.25);
+    --mono: 'DM Mono', monospace; --sans: 'DM Sans', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 300; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 16px 80px; }
+
+  nav { width: 100%; max-width: 760px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 48px; }
+  .nav-logo { font-family: var(--mono); font-size: 13px; color: var(--purple); letter-spacing: 0.08em; text-decoration: none; }
+  .nav-back { font-family: var(--mono); font-size: 12px; color: var(--muted); text-decoration: none; letter-spacing: 0.04em; transition: color 0.15s; }
+  .nav-back:hover { color: var(--text); }
+
+  .header { text-align: center; margin-bottom: 48px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em; color: var(--purple); text-transform: uppercase; margin-bottom: 12px; }
+  h1 { font-size: clamp(26px, 5vw, 40px); font-weight: 300; letter-spacing: -0.02em; line-height: 1.1; }
+  h1 span { font-weight: 500; }
+  .subtitle { margin-top: 10px; font-size: 14px; color: var(--muted); max-width: 500px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+
+  .container { width: 100%; max-width: 760px; display: flex; flex-direction: column; gap: 16px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+  .card-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  @media (max-width: 560px) { .grid-2 { grid-template-columns: 1fr; } .grid-3 { grid-template-columns: 1fr 1fr; } }
+
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-family: var(--mono); letter-spacing: 0.03em; }
+  .field input, .field select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: var(--mono); font-size: 14px;
+    padding: 9px 12px; outline: none; transition: border-color 0.15s; appearance: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(167,139,250,0.08); }
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a7f8a'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; padding-right: 30px; cursor: pointer;
+  }
+
+  .group-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 480px) { .group-row { grid-template-columns: 1fr; } }
+  .group-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .group-title { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  .field .hint { font-size: 11px; color: var(--muted); margin-top: 5px; font-family: var(--mono); opacity: 0.7; }
+
+  /* Prior strength toggle */
+  .prior-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .prior-btn {
+    padding: 10px 8px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--muted); font-family: var(--mono);
+    font-size: 11px; cursor: pointer; transition: all 0.15s; text-align: center; line-height: 1.5;
+  }
+  .prior-btn:hover { border-color: var(--border-hover); color: var(--text); }
+  .prior-btn.active { background: var(--purple-dim); border-color: var(--purple-border); color: var(--purple); }
+  .prior-title { font-weight: 500; display: block; margin-bottom: 2px; }
+  .prior-sub { font-size: 10px; opacity: 0.7; }
+
+  /* VERDICT CARD */
+  .verdict-card {
+    border-radius: 18px; padding: 32px 28px;
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .verdict-ship { background: var(--accent-dim); border: 1px solid var(--accent-border); }
+  .verdict-wait { background: var(--amber-dim); border: 1px solid var(--amber-border); }
+  .verdict-stop { background: var(--red-dim); border: 1px solid var(--red-border); }
+
+  .verdict-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+  .verdict-left {}
+  .verdict-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
+  .verdict-ship .verdict-tag { color: var(--accent); }
+  .verdict-wait .verdict-tag { color: var(--amber); }
+  .verdict-stop .verdict-tag { color: var(--red); }
+  .verdict-title { font-size: clamp(20px, 4vw, 26px); font-weight: 500; font-family: var(--mono); letter-spacing: -0.01em; }
+  .verdict-ship .verdict-title { color: var(--accent); }
+  .verdict-wait .verdict-title { color: var(--amber); }
+  .verdict-stop .verdict-title { color: var(--red); }
+  .verdict-subtitle { font-size: 13px; margin-top: 6px; font-family: var(--mono); opacity: 0.7; }
+
+  /* Big probability number */
+  .prob-display { text-align: right; }
+  .prob-num { font-size: clamp(42px, 8vw, 64px); font-weight: 500; font-family: var(--mono); line-height: 1; }
+  .verdict-ship .prob-num { color: var(--accent); }
+  .verdict-wait .prob-num { color: var(--amber); }
+  .verdict-stop .prob-num { color: var(--red); }
+  .prob-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; opacity: 0.6; margin-top: 4px; }
+
+  /* Probability bar */
+  .prob-bar-wrap { height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+  .prob-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+  .verdict-ship .prob-bar-fill { background: var(--accent); }
+  .verdict-wait .prob-bar-fill { background: var(--amber); }
+  .verdict-stop .prob-bar-fill { background: var(--red); }
+  .prob-bar-labels { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 4px; }
+
+  /* Stat chips in verdict */
+  .verdict-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (max-width: 480px) { .verdict-chips { grid-template-columns: 1fr 1fr; } }
+  .v-chip { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 10px 12px; }
+  .v-chip-label { font-size: 10px; font-family: var(--mono); letter-spacing: 0.06em; opacity: 0.6; margin-bottom: 4px; text-transform: uppercase; }
+  .v-chip-val { font-size: 15px; font-weight: 500; font-family: var(--mono); }
+
+  /* Posterior curve */
+  .curve-wrap { position: relative; }
+  canvas#posteriorChart { width: 100%; height: 200px; display: block; }
+
+  /* Chips row */
+  .chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+  .chip-label { font-size: 11px; color: var(--muted); font-family: var(--mono); letter-spacing: 0.06em; }
+  .chip-val { font-size: 15px; font-weight: 500; font-family: var(--mono); color: var(--text); }
+
+  /* Collapsible practitioner section */
+  .detail-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0; }
+  .detail-toggle-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--purple); }
+  .detail-chevron { font-family: var(--mono); font-size: 13px; color: var(--purple); transition: transform 0.2s; }
+  .detail-chevron.open { transform: rotate(90deg); }
+  .detail-body { display: none; margin-top: 16px; }
+  .detail-body.open { display: block; }
+
+  .formula-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 2; }
+  .formula-box .hl { color: var(--purple); }
+
+  /* Tooltip */
+  .tip { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; border: 1px solid #444; color: #7a7f8a; font-size: 9px; cursor: pointer; margin-left: 5px; vertical-align: middle; font-family: var(--mono); flex-shrink: 0; }
+  .tip:hover { border-color: var(--purple); color: var(--purple); }
+  #tt-popup { display: none; position: absolute; z-index: 999; background: #0e0f11; border: 1px solid rgba(167,139,250,0.28); border-radius: 10px; padding: 10px 14px; max-width: 240px; pointer-events: none; }
+  #tt-popup .tt-title { font-family: var(--mono); font-size: 11px; color: var(--purple); margin-bottom: 4px; letter-spacing: 0.04em; }
+  #tt-popup .tt-body { font-size: 12px; color: #9a9fa8; line-height: 1.6; font-family: var(--sans); font-weight: 300; }
+
+  footer { margin-top: 48px; font-size: 11px; font-family: var(--mono); color: var(--muted); letter-spacing: 0.05em; opacity: 0.5; text-align: center; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Test Right</a>
+  <a class="nav-back" href="index.html">← All tools</a>
+</nav>
+
+<div class="header">
+  <p class="eyebrow">Tool 05</p>
+  <h1>Bayesian A/B <span>Monitor</span></h1>
+  <p class="subtitle">Track the probability your treatment is winning — as data arrives. No fixed sample size required. Update any time.</p>
+</div>
+
+<div class="container">
+
+  <!-- PRIOR -->
+  <div class="card">
+    <p class="card-label">Step 1 — Your prior belief <span class="tip" data-title="What is a prior?" data-tip="In Bayesian testing, you start with a belief about your baseline rate before seeing any data. Stronger priors mean the data needs more evidence to move your conclusions.">?</span></p>
+    <div class="grid-2" style="margin-bottom:14px;">
+      <div class="field">
+        <label>Baseline rate (%) <span class="tip" data-title="Prior baseline rate" data-tip="Your best estimate of the control conversion rate before the test. Use your historical average if you have it.">?</span></label>
+        <input type="number" id="priorRate" value="88.5" min="0.1" max="99.9" step="0.1" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Ship threshold (%) <span class="tip" data-title="Probability to ship" data-tip="The minimum probability that treatment beats control before you are willing to ship. 95% is the standard. Higher = more conservative.">?</span></label>
+        <input type="number" id="shipThreshold" value="95" min="50" max="99.9" step="0.5" oninput="calc()">
+      </div>
+    </div>
+    <div class="field">
+      <label>Prior strength <span class="tip" data-title="Prior strength" data-tip="How confident are you in your baseline estimate? Weak = vague guess (small prior weight). Medium = based on recent data. Strong = very stable historical metric.">?</span></label>
+      <div class="prior-grid">
+        <button class="prior-btn" id="prior-weak" onclick="setPrior('weak')">
+          <span class="prior-title">Weak</span>
+          <span class="prior-sub">Just a rough guess</span>
+        </button>
+        <button class="prior-btn active" id="prior-medium" onclick="setPrior('medium')">
+          <span class="prior-title">Medium</span>
+          <span class="prior-sub">Based on recent data</span>
+        </button>
+        <button class="prior-btn" id="prior-strong" onclick="setPrior('strong')">
+          <span class="prior-title">Strong</span>
+          <span class="prior-sub">Very stable metric</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OBSERVED DATA -->
+  <div class="card">
+    <p class="card-label">Step 2 — Observed data so far <span class="tip" data-title="Live data entry" data-tip="Enter your current running totals. You can update these any time during the test to see how the probability shifts as more data arrives.">?</span></p>
+    <div class="group-row">
+      <div class="group-box">
+        <p class="group-title">Control (A)</p>
+        <div class="field" style="margin-bottom:10px;">
+          <label>Users</label>
+          <input type="number" id="n_a" value="31790" min="1" oninput="calc()">
+        </div>
+        <div class="field">
+          <label>Conversions</label>
+          <input type="number" id="c_a" value="22494" min="0" oninput="calc()">
+          <p class="hint" id="rate_a_hint">Rate: —</p>
+        </div>
+      </div>
+      <div class="group-box">
+        <p class="group-title">Treatment (B)</p>
+        <div class="field" style="margin-bottom:10px;">
+          <label>Users</label>
+          <input type="number" id="n_b" value="31313" min="1" oninput="calc()">
+        </div>
+        <div class="field">
+          <label>Conversions</label>
+          <input type="number" id="c_b" value="22700" min="0" oninput="calc()">
+          <p class="hint" id="rate_b_hint">Rate: —</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VERDICT -->
+  <div class="verdict-card verdict-wait" id="verdictCard">
+    <div class="verdict-top">
+      <div class="verdict-left">
+        <p class="verdict-tag" id="verdictTag">Verdict</p>
+        <p class="verdict-title" id="verdictTitle">—</p>
+        <p class="verdict-subtitle" id="verdictSub"></p>
+      </div>
+      <div class="prob-display">
+        <p class="prob-num" id="probNum">—</p>
+        <p class="prob-label">P(B &gt; A)</p>
+      </div>
+    </div>
+    <div class="prob-bar-wrap">
+      <div class="prob-bar-fill" id="probBar" style="width:0%"></div>
+    </div>
+    <div class="prob-bar-labels">
+      <span>0%</span>
+      <span id="thresholdLabel">Threshold: 95%</span>
+      <span>100%</span>
+    </div>
+    <div class="verdict-chips" style="margin-top:20px;">
+      <div class="v-chip"><div class="v-chip-label">P(B worse)</div><div class="v-chip-val" id="probWorse">—</div></div>
+      <div class="v-chip"><div class="v-chip-label">Expected lift</div><div class="v-chip-val" id="expectedLift">—</div></div>
+      <div class="v-chip"><div class="v-chip-label">95% credible interval</div><div class="v-chip-val" id="credibleInterval">—</div></div>
+      <div class="v-chip"><div class="v-chip-label">Expected loss (ship B)</div><div class="v-chip-val" id="expectedLoss">—</div></div>
+      <div class="v-chip"><div class="v-chip-label">Control rate</div><div class="v-chip-val" id="controlRate">—</div></div>
+      <div class="v-chip"><div class="v-chip-label">Treatment rate</div><div class="v-chip-val" id="treatmentRate">—</div></div>
+    </div>
+  </div>
+
+  <!-- POSTERIOR CURVE -->
+  <div class="card">
+    <p class="card-label">Posterior distributions <span class="tip" data-title="What is this chart?" data-tip="Each curve shows the probability distribution of the true conversion rate. Where they overlap is uncertainty. As you collect more data, the curves narrow and separate — making the decision clearer.">?</span></p>
+    <canvas id="posteriorChart" height="180"></canvas>
+    <div style="display:flex;gap:20px;margin-top:12px;font-family:var(--mono);font-size:11px;">
+      <span style="color:var(--blue);">— Control (A)</span>
+      <span style="color:var(--purple);">— Treatment (B)</span>
+      <span style="color:var(--muted);margin-left:auto;" id="sampleNote"></span>
+    </div>
+  </div>
+
+  <!-- PRACTITIONER DETAILS -->
+  <div class="card">
+    <div class="detail-toggle" onclick="toggleDetail()">
+      <span class="detail-toggle-label">► Practitioner details — Beta distribution parameters</span>
+      <span class="detail-chevron" id="detailChevron">›</span>
+    </div>
+    <div class="detail-body" id="detailBody">
+      <div style="margin-top:16px;">
+        <div class="grid-2" style="margin-bottom:14px;">
+          <div class="chip"><span class="chip-label">Control α (alpha)</span><span class="chip-val" id="alpha_a">—</span></div>
+          <div class="chip"><span class="chip-label">Control β (beta)</span><span class="chip-val" id="beta_a">—</span></div>
+          <div class="chip"><span class="chip-label">Treatment α (alpha)</span><span class="chip-val" id="alpha_b">—</span></div>
+          <div class="chip"><span class="chip-label">Treatment β (beta)</span><span class="chip-val" id="beta_b">—</span></div>
+        </div>
+        <div class="formula-box" id="formulaOut">Enter data above to see the Beta distribution parameters.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>Test Right &bull; Bayesian A/B Monitor &bull; <a href="index.html" style="color:var(--muted);">← all tools</a></footer>
+
+<div id="tt-popup"><div class="tt-title" id="tt-title"></div><div class="tt-body" id="tt-body"></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+let priorStrength = 'medium';
+let posteriorChart = null;
+
+// Prior strength → weight multiplier on prior
+const PRIOR_WEIGHT = { weak: 10, medium: 100, strong: 1000 };
+
+function setPrior(s) {
+  priorStrength = s;
+  ['weak','medium','strong'].forEach(p =>
+    document.getElementById('prior-' + p).classList.toggle('active', p === s)
+  );
+  calc();
+}
+
+function fmt2(n) { return (n * 100).toFixed(2) + '%'; }
+function fmtPP(n) { return (n >= 0 ? '+' : '') + (n * 100).toFixed(2) + 'pp'; }
+
+// Beta distribution helpers
+function betaMean(a, b) { return a / (a + b); }
+
+// Regularised incomplete beta — numerical integration for P(B > A)
+// Using Monte Carlo simulation (fast enough for browser)
+function probBetterMC(a1, b1, a2, b2, samples) {
+  samples = samples || 50000;
+  // Use Beta quantile approximation via normal approx for speed
+  // More accurate: use direct numerical integration
+  return probBetterNumerical(a1, b1, a2, b2);
+}
+
+// Numerical integration: P(B > A) = integral over p_a of P(p_b > p_a) * f(p_a) dp_a
+// Use Simpson's rule with 500 intervals
+function betaPDF(x, a, b) {
+  if (x <= 0 || x >= 1) return 0;
+  return Math.exp((a-1)*Math.log(x) + (b-1)*Math.log(1-x) - logBeta(a, b));
+}
+
+function logBeta(a, b) {
+  return logGamma(a) + logGamma(b) - logGamma(a + b);
+}
+
+function logGamma(z) {
+  const c = [76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
+  let y = z, x = z, tmp = x + 5.5;
+  tmp -= (x + 0.5) * Math.log(tmp);
+  let ser = 1.000000000190015;
+  for (let j = 0; j < 6; j++) ser += c[j] / ++y;
+  return -tmp + Math.log(2.5066282746310005 * ser / x);
+}
+
+// Regularised incomplete beta via continued fraction
+function regIncBeta(x, a, b) {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+  if (x > (a + 1) / (a + b + 2)) return 1 - regIncBeta(1 - x, b, a);
+  const lbeta = logBeta(a, b);
+  const front = Math.exp(Math.log(x)*a + Math.log(1-x)*b - lbeta) / a;
+  return front * contFrac(x, a, b);
+}
+
+function contFrac(x, a, b) {
+  const MAXIT = 200, EPS = 3e-7;
+  let c = 1, d = 1 - (a+b)*x/(a+1);
+  if (Math.abs(d) < 1e-30) d = 1e-30;
+  d = 1/d; let h = d;
+  for (let m = 1; m <= MAXIT; m++) {
+    let m2 = 2*m;
+    let aa = m*(b-m)*x / ((a+m2-1)*(a+m2));
+    d = 1 + aa*d; if (Math.abs(d) < 1e-30) d = 1e-30;
+    c = 1 + aa/c; if (Math.abs(c) < 1e-30) c = 1e-30;
+    d = 1/d; h *= d*c;
+    aa = -(a+m)*(a+b+m)*x / ((a+m2)*(a+m2+1));
+    d = 1 + aa*d; if (Math.abs(d) < 1e-30) d = 1e-30;
+    c = 1 + aa/c; if (Math.abs(c) < 1e-30) c = 1e-30;
+    d = 1/d; let del = d*c; h *= del;
+    if (Math.abs(del-1) < EPS) break;
+  }
+  return h;
+}
+
+// P(B > A) using numerical integration over Beta PDFs
+function probBetterNumerical(a1, b1, a2, b2) {
+  // P(X2 > X1) where X1~Beta(a1,b1), X2~Beta(a2,b2)
+  // = integral_0^1 P(X2 > x) * f_X1(x) dx
+  // = integral_0^1 (1 - regIncBeta(x, a2, b2)) * betaPDF(x, a1, b1) dx
+  const N = 300;
+  const dx = 1.0 / N;
+  let sum = 0;
+  for (let i = 0; i < N; i++) {
+    const x = (i + 0.5) * dx;
+    const pBGreater = 1 - regIncBeta(x, a2, b2);
+    const fA = betaPDF(x, a1, b1);
+    sum += pBGreater * fA * dx;
+  }
+  return Math.min(0.9999, Math.max(0.0001, sum));
+}
+
+// Expected loss if we ship B and A is actually better
+function expectedLoss(a1, b1, a2, b2) {
+  const N = 200;
+  const dx = 1.0 / N;
+  let loss = 0;
+  for (let i = 0; i < N; i++) {
+    const pA = (i + 0.5) * dx;
+    const fA = betaPDF(pA, a1, b1);
+    // E[max(pA - pB, 0)] approx using mean of B
+    const meanB = betaMean(a2, b2);
+    const l = Math.max(pA - meanB, 0);
+    loss += l * fA * dx;
+  }
+  return loss;
+}
+
+// Generate Beta PDF curve points
+function betaCurvePoints(a, b, nPoints) {
+  nPoints = nPoints || 200;
+  const pts = [];
+  // Find range: mean ± 4*std
+  const mean = a / (a + b);
+  const variance = (a * b) / ((a + b) * (a + b) * (a + b + 1));
+  const std = Math.sqrt(variance);
+  const lo = Math.max(0.001, mean - 4 * std);
+  const hi = Math.min(0.999, mean + 4 * std);
+  const dx = (hi - lo) / nPoints;
+  for (let i = 0; i <= nPoints; i++) {
+    const x = lo + i * dx;
+    pts.push({ x: parseFloat((x * 100).toFixed(3)), y: betaPDF(x, a, b) });
+  }
+  return pts;
+}
+
+// Credible interval (HDI approximation via quantiles)
+function betaQuantile(p, a, b) {
+  // Newton-Raphson on the CDF
+  let x = a / (a + b); // start at mean
+  for (let i = 0; i < 50; i++) {
+    const fx = regIncBeta(x, a, b) - p;
+    const dfx = betaPDF(x, a, b);
+    if (Math.abs(dfx) < 1e-15) break;
+    x = x - fx / dfx;
+    x = Math.max(0.0001, Math.min(0.9999, x));
+    if (Math.abs(fx) < 1e-8) break;
+  }
+  return x;
+}
+
+function calc() {
+  const priorRate = parseFloat(document.getElementById('priorRate').value) / 100;
+  const shipPct = parseFloat(document.getElementById('shipThreshold').value);
+  const n_a = parseInt(document.getElementById('n_a').value) || 0;
+  const c_a = parseInt(document.getElementById('c_a').value) || 0;
+  const n_b = parseInt(document.getElementById('n_b').value) || 0;
+  const c_b = parseInt(document.getElementById('c_b').value) || 0;
+
+  if (!n_a || !n_b || c_a > n_a || c_b > n_b || isNaN(priorRate)) return;
+
+  const obs_a = n_a - c_a; // failures
+  const obs_b = n_b - c_b;
+
+  // Prior: Beta(alpha0, beta0) based on prior rate and strength weight
+  const w = PRIOR_WEIGHT[priorStrength];
+  const prior_a_param = priorRate * w;
+  const prior_b_param = (1 - priorRate) * w;
+
+  // Posterior: Beta(alpha0 + successes, beta0 + failures)
+  const post_a_alpha = prior_a_param + c_a;
+  const post_a_beta  = prior_b_param + obs_a;
+  const post_b_alpha = prior_a_param + c_b;
+  const post_b_beta  = prior_b_param + obs_b;
+
+  // Observed rates
+  const rate_a = c_a / n_a;
+  const rate_b = c_b / n_b;
+  document.getElementById('rate_a_hint').textContent = 'Rate: ' + fmt2(rate_a);
+  document.getElementById('rate_b_hint').textContent = 'Rate: ' + fmt2(rate_b);
+
+  // Probability B > A
+  const probB = probBetterNumerical(post_a_alpha, post_a_beta, post_b_alpha, post_b_beta);
+  const probA = 1 - probB;
+  const shipThreshold = shipPct / 100;
+
+  // Expected lift (posterior mean difference)
+  const meanA = betaMean(post_a_alpha, post_a_beta);
+  const meanB = betaMean(post_b_alpha, post_b_beta);
+  const lift  = meanB - meanA;
+
+  // Credible interval on lift (approximate via Delta method on posterior means)
+  const varA = (post_a_alpha * post_a_beta) / (Math.pow(post_a_alpha + post_a_beta, 2) * (post_a_alpha + post_a_beta + 1));
+  const varB = (post_b_alpha * post_b_beta) / (Math.pow(post_b_alpha + post_b_beta, 2) * (post_b_alpha + post_b_beta + 1));
+  const seLifft = Math.sqrt(varA + varB);
+  const ciLo = lift - 1.96 * seLifft;
+  const ciHi = lift + 1.96 * seLifft;
+
+  // Expected loss
+  const loss = expectedLoss(post_a_alpha, post_a_beta, post_b_alpha, post_b_beta);
+
+  // Verdict
+  const vc = document.getElementById('verdictCard');
+  const vTitle = document.getElementById('verdictTitle');
+  const vSub = document.getElementById('verdictSub');
+  const vTag = document.getElementById('verdictTag');
+
+  vc.className = 'verdict-card';
+  if (probB >= shipThreshold) {
+    vc.classList.add('verdict-ship');
+    vTag.textContent = '✓ Verdict';
+    vTitle.textContent = 'Ship treatment B';
+    vSub.textContent = `${(probB*100).toFixed(1)}% probability B beats A — exceeds your ${shipPct}% threshold.`;
+  } else if (probB < 0.5) {
+    vc.classList.add('verdict-stop');
+    vTag.textContent = '✕ Verdict';
+    vTitle.textContent = 'B is likely losing';
+    vSub.textContent = `Only ${(probB*100).toFixed(1)}% probability B beats A. Consider stopping.`;
+  } else {
+    vc.classList.add('verdict-wait');
+    vTag.textContent = '⏸ Verdict';
+    vTitle.textContent = 'Keep collecting data';
+    vSub.textContent = `${(probB*100).toFixed(1)}% probability B beats A — needs ${shipPct}% to ship. ${((shipThreshold - probB)*100).toFixed(1)}pp to go.`;
+  }
+
+  document.getElementById('probNum').textContent = (probB * 100).toFixed(1) + '%';
+  document.getElementById('probBar').style.width = (probB * 100).toFixed(1) + '%';
+  document.getElementById('thresholdLabel').textContent = 'Threshold: ' + shipPct + '%';
+  document.getElementById('probWorse').textContent = (probA * 100).toFixed(1) + '%';
+  document.getElementById('expectedLift').textContent = fmtPP(lift);
+  document.getElementById('credibleInterval').textContent = '[' + fmtPP(ciLo) + ', ' + fmtPP(ciHi) + ']';
+  document.getElementById('expectedLoss').textContent = (loss * 100).toFixed(4) + '%';
+  document.getElementById('controlRate').textContent = fmt2(meanA);
+  document.getElementById('treatmentRate').textContent = fmt2(meanB);
+
+  // Posterior curve
+  drawPosterior(post_a_alpha, post_a_beta, post_b_alpha, post_b_beta);
+
+  // Practitioner details
+  document.getElementById('alpha_a').textContent = post_a_alpha.toFixed(1);
+  document.getElementById('beta_a').textContent = post_a_beta.toFixed(1);
+  document.getElementById('alpha_b').textContent = post_b_alpha.toFixed(1);
+  document.getElementById('beta_b').textContent = post_b_beta.toFixed(1);
+
+  document.getElementById('formulaOut').innerHTML =
+    `Prior: <span class="hl">Beta(${prior_a_param.toFixed(1)}, ${prior_b_param.toFixed(1)})</span> — ${priorStrength} strength (weight = ${w})<br>` +
+    `Control posterior: <span class="hl">Beta(${prior_a_param.toFixed(1)} + ${c_a}, ${prior_b_param.toFixed(1)} + ${obs_a})</span> = Beta(${post_a_alpha.toFixed(1)}, ${post_a_beta.toFixed(1)})<br>` +
+    `Treatment posterior: <span class="hl">Beta(${prior_a_param.toFixed(1)} + ${c_b}, ${prior_b_param.toFixed(1)} + ${obs_b})</span> = Beta(${post_b_alpha.toFixed(1)}, ${post_b_beta.toFixed(1)})<br>` +
+    `P(B &gt; A) = <span class="hl">${(probB*100).toFixed(3)}%</span> — numerical integration over posterior densities`;
+
+  document.getElementById('sampleNote').textContent = `n_A = ${n_a.toLocaleString()} · n_B = ${n_b.toLocaleString()}`;
+}
+
+function drawPosterior(aa, ab, ba, bb) {
+  const ptsA = betaCurvePoints(aa, ab, 300);
+  const ptsB = betaCurvePoints(ba, bb, 300);
+
+  // Merge x ranges
+  const allX = [...new Set([...ptsA.map(p=>p.x), ...ptsB.map(p=>p.x)])].sort((a,b)=>a-b);
+
+  function interp(pts, x) {
+    for (let i = 0; i < pts.length - 1; i++) {
+      if (pts[i].x <= x && pts[i+1].x >= x) {
+        const t = (x - pts[i].x) / (pts[i+1].x - pts[i].x);
+        return pts[i].y + t * (pts[i+1].y - pts[i].y);
+      }
+    }
+    return 0;
+  }
+
+  const labels = allX;
+  const dataA = allX.map(x => interp(ptsA, x));
+  const dataB = allX.map(x => interp(ptsB, x));
+
+  const ctx = document.getElementById('posteriorChart').getContext('2d');
+  if (posteriorChart) posteriorChart.destroy();
+  posteriorChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Control (A)', data: dataA, borderColor: '#60a8f0', borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: 'rgba(96,168,240,0.08)', tension: 0.4 },
+        { label: 'Treatment (B)', data: dataB, borderColor: '#a78bfa', borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: 'rgba(167,139,250,0.08)', tension: 0.4 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 300 },
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: {
+          title: items => items[0].label.toFixed(2) + '%',
+          label: item => item.dataset.label + ': density ' + item.raw.toFixed(2)
+        }
+      }},
+      scales: {
+        x: { type: 'linear', title: { display: true, text: 'Conversion rate (%)', color: '#555', font: { family: 'DM Mono', size: 10 } }, ticks: { color: '#555', font: { family: 'DM Mono', size: 10 }, callback: v => v.toFixed(1) + '%' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { title: { display: false }, ticks: { color: '#555', font: { family: 'DM Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
+  });
+}
+
+function toggleDetail() {
+  const body = document.getElementById('detailBody');
+  const ch = document.getElementById('detailChevron');
+  body.classList.toggle('open');
+  ch.classList.toggle('open');
+}
+
+// Tooltip
+(function(){
+  const pop = document.getElementById('tt-popup');
+  document.querySelectorAll('.tip').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      document.getElementById('tt-title').textContent = el.dataset.title || '';
+      document.getElementById('tt-body').textContent = el.dataset.tip || '';
+      pop.style.display = 'block';
+      const r = el.getBoundingClientRect();
+      let left = r.left + window.scrollX;
+      let top = r.bottom + window.scrollY + 8;
+      if (left + 260 > window.innerWidth) left = window.innerWidth - 265;
+      pop.style.left = left + 'px';
+      pop.style.top = top + 'px';
+    });
+    el.addEventListener('mouseleave', () => { pop.style.display = 'none'; });
+  });
+})();
+
+['priorRate','shipThreshold','n_a','c_a','n_b','c_b'].forEach(id =>
+  document.getElementById(id).addEventListener('input', calc)
+);
+calc();
+</script>
+</body>
+</html>
