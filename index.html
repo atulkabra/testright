@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<script>(function(){var t=localStorage.getItem("tr-theme")||"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,6 +18,30 @@
     --amber: #f0c060; --amber-dim: rgba(240,192,96,0.1); --amber-border: rgba(240,192,96,0.25);
     --mono: 'DM Mono', monospace; --sans: 'DM Sans', sans-serif;
   }
+:root {
+    --bg: #0e0f11; --surface: #16181c; --surface2: #1e2126;
+    --border: rgba(255,255,255,0.07); --border-hover: rgba(255,255,255,0.14);
+    --text: #f0f0ee; --muted: #7a7f8a;
+  }
+  [data-theme="light"] {
+    --bg: #f8f7f4; --surface: #ffffff; --surface2: #f0eeea;
+    --border: rgba(0,0,0,0.08); --border-hover: rgba(0,0,0,0.16);
+    --text: #1a1a18; --muted: #888780;
+  }
+  [data-theme="light"] body { background: var(--bg); color: var(--text); }
+  [data-theme="light"] .nav-logo { color: #2a6ab0; }
+  [data-theme="light"] .nav-tag { color: #7a5fc0; }
+  [data-theme="light"] .nav-back { color: var(--muted); }
+  [data-theme="light"] h1 { color: var(--text); }
+  [data-theme="light"] .hero-sub { color: #4a7a5a; }
+
+  .theme-btn {
+    background: none; border: 1px solid var(--border); border-radius: 8px;
+    color: var(--muted); cursor: pointer; font-size: 14px;
+    padding: 4px 10px; font-family: var(--mono); transition: all 0.15s;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .theme-btn:hover { border-color: var(--border-hover); color: var(--text); }
   body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 300; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 48px 24px 48px; }
 
   nav { width: 100%; max-width: 1100px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0; margin-top: 0; }
@@ -107,6 +132,51 @@
   .b-pill { font-size: 9px; padding: 2px 8px; border-radius: 4px; background: rgba(167,139,250,0.08); color: var(--purple); border: 1px solid rgba(167,139,250,0.2); white-space: nowrap; font-family: var(--mono); letter-spacing: 0.04em; }
 
   footer { margin-top: 0; font-size: 11px; font-family: var(--mono); letter-spacing: 0.05em; text-align: center; background: #0e0f11; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 16px 24px; display: inline-flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
+
+  [data-theme="light"] .card,
+  [data-theme="light"] .tool-card,
+  [data-theme="light"] .group-box,
+  [data-theme="light"] .result-card,
+  [data-theme="light"] .verdict-card,
+  [data-theme="light"] .section { background: var(--surface); border-color: var(--border); }
+  [data-theme="light"] .chip,
+  [data-theme="light"] .saving-bar,
+  [data-theme="light"] .formula-box { background: var(--surface2); border-color: var(--border); }
+  [data-theme="light"] .field input,
+  [data-theme="light"] .field select,
+  [data-theme="light"] .field textarea,
+  [data-theme="light"] .url-input,
+  [data-theme="light"] textarea.job-paste { background: var(--surface2); border-color: var(--border); color: var(--text); }
+  [data-theme="light"] .chip-val,
+  [data-theme="light"] .score-num,
+  [data-theme="light"] .result-num,
+  [data-theme="light"] .score-big { color: var(--text); }
+  [data-theme="light"] .section-body,
+  [data-theme="light"] .result-why,
+  [data-theme="light"] p { color: #555; }
+  [data-theme="light"] .t-btn { background: var(--surface2); border-color: var(--border); color: var(--muted); }
+  [data-theme="light"] .t-btn.active { background: var(--accent-dim); border-color: var(--accent-border); color: #3a6b00; }
+  [data-theme="light"] .compare-table td,
+  [data-theme="light"] .seq-table td,
+  [data-theme="light"] .thresh-table td { color: var(--text); }
+  [data-theme="light"] .banner { background: #f0eeff; border-color: rgba(167,139,250,0.3); }
+  [data-theme="light"] .opt { background: var(--surface2); border-color: var(--border); }
+  [data-theme="light"] .opt.selected { background: var(--purple-dim); border-color: var(--purple-border); }
+  [data-theme="light"] .q-card { background: var(--surface); border-color: var(--border); }
+  [data-theme="light"] .result-card.rank-1 { background: var(--purple-dim); }
+  [data-theme="light"] .result-card.rank-2,
+  [data-theme="light"] .result-card.rank-3 { background: var(--surface); }
+  [data-theme="light"] .drop-zone { background: var(--surface2); border-color: var(--border); }
+  [data-theme="light"] .file-info { background: var(--surface2); border-color: var(--border); }
+  [data-theme="light"] footer { background: #f0eeea; border-color: rgba(0,0,0,0.08); }
+
+
+  .tool06 { background: #171210; border: 1px solid rgba(240,112,96,0.18); }
+  [data-theme="light"] .tool06 { background: #fff5f3; border: 1px solid rgba(240,112,96,0.25); }
+  [data-theme="light"] .tool06 .tool-desc { color: #888; }
+  [data-theme="light"] .footer-attribution { color: #4a7a5a !important; }
+  [data-theme="light"] footer span[style*="6a9a7a"] { color: #3a6a4a !important; }
+
 </style>
 </head>
 <body>
@@ -114,6 +184,7 @@
 <nav>
   <span class="nav-logo">Test Right</span>
   <span class="nav-tag">Experimentation Toolkit</span>
+  <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">☀ Light</button>
 </nav>
 
 <div class="hero">
@@ -202,7 +273,7 @@
     <div class="tool-cta">Open monitor <span class="arrow">→</span></div>
   </a>
 
-  <div class="tool-card c6" style="background:#171210;border:1px solid rgba(240,112,96,0.18);border-radius:18px;padding:20px 22px;display:flex;flex-direction:column;gap:10px;">
+  <div class="tool-card c6 tool06" style="border-radius:18px;padding:20px 22px;display:flex;flex-direction:column;gap:10px;">
     <div class="card-top" style="display:flex;align-items:center;gap:10px;">
       <span style="font-size:24px;">📋</span>
       <div>
@@ -219,6 +290,28 @@
 
 
 <footer><span style="color:#85b7eb;">Test Right</span><span style="color:#444;">&bull;</span><span style="color:#c9b8fa;">Experimentation Toolkit</span><span style="color:#444;">&bull;</span><span style="color:#6a9a7a;">Designed &amp; built by Atul Kabra</span></footer>
+
+
+<script>
+(function(){
+  const saved = localStorage.getItem('tr-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  function updateBtn() {
+    const btn = document.getElementById('themeBtn');
+    if (!btn) return;
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.innerHTML = isDark ? '☀ Light' : '☾ Dark';
+  }
+  document.addEventListener('DOMContentLoaded', updateBtn);
+  window.toggleTheme = function() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('tr-theme', next);
+    updateBtn();
+  };
+})();
+</script>
 
 </body>
 </html>
