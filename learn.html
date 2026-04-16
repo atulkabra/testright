@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learn Experimentation — Test Right</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0e0f11; --surface: #16181c; --surface2: #1e2126;
+    --border: rgba(255,255,255,0.07); --border-hover: rgba(255,255,255,0.14);
+    --text: #f0f0ee; --muted: #7a7f8a;
+    --accent: #c8f060; --accent-dim: rgba(200,240,96,0.12); --accent-border: rgba(200,240,96,0.3);
+    --blue: #60a8f0; --blue-dim: rgba(96,168,240,0.1); --blue-border: rgba(96,168,240,0.25);
+    --purple: #a78bfa; --purple-dim: rgba(167,139,250,0.1); --purple-border: rgba(167,139,250,0.28);
+    --mono: 'DM Mono', monospace; --sans: 'DM Sans', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 300; min-height: 100vh; padding: 48px 24px 80px; display: flex; flex-direction: column; align-items: center; }
+
+  nav { width: 100%; max-width: 800px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 56px; }
+  .nav-logo { font-family: var(--mono); font-size: 13px; color: #85b7eb; letter-spacing: 0.08em; text-decoration: none; }
+  .nav-back { font-family: var(--mono); font-size: 12px; color: var(--muted); text-decoration: none; letter-spacing: 0.04em; transition: color 0.15s; }
+  .nav-back:hover { color: var(--text); }
+
+  .container { width: 100%; max-width: 800px; }
+
+  /* Hero */
+  .hero { margin-bottom: 56px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em; color: var(--purple); text-transform: uppercase; margin-bottom: 14px; }
+  h1 { font-size: clamp(28px, 5vw, 44px); font-weight: 300; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 14px; }
+  h1 strong { font-weight: 500; color: var(--purple); }
+  .hero-sub { font-size: 16px; color: var(--muted); line-height: 1.7; max-width: 580px; }
+
+  /* Personal story card */
+  .story-card { background: var(--purple-dim); border: 1px solid var(--purple-border); border-radius: 16px; padding: 28px 32px; margin-bottom: 48px; position: relative; }
+  .story-quote { font-size: 15px; line-height: 1.8; color: rgba(167,139,250,0.85); font-style: italic; margin-bottom: 14px; }
+  .story-attr { font-family: var(--mono); font-size: 11px; color: var(--purple); letter-spacing: 0.04em; }
+  .quote-mark { font-size: 48px; color: var(--purple); opacity: 0.2; line-height: 1; margin-bottom: -10px; display: block; }
+
+  /* Section */
+  .section { margin-bottom: 48px; }
+  .section-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  h2 { font-size: 22px; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 12px; }
+  p { font-size: 15px; color: #b0ada8; line-height: 1.8; margin-bottom: 14px; }
+  p:last-child { margin-bottom: 0; }
+  strong { font-weight: 500; color: var(--text); }
+
+  /* Lifecycle steps */
+  .steps { display: flex; flex-direction: column; gap: 0; }
+  .step { display: flex; gap: 20px; padding: 20px 0; border-bottom: 1px solid var(--border); }
+  .step:last-child { border-bottom: none; }
+  .step-num { font-family: var(--mono); font-size: 11px; color: var(--purple); background: var(--purple-dim); border: 1px solid var(--purple-border); border-radius: 6px; padding: 3px 10px; flex-shrink: 0; height: fit-content; margin-top: 2px; }
+  .step-content {}
+  .step-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .step-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .step-link { font-family: var(--mono); font-size: 11px; color: var(--purple); margin-top: 6px; display: inline-block; }
+
+  /* Resource cards */
+  .resources { display: flex; flex-direction: column; gap: 10px; }
+  .resource { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; display: flex; align-items: flex-start; gap: 16px; text-decoration: none; color: inherit; transition: border-color 0.15s; }
+  .resource:hover { border-color: var(--border-hover); }
+  .resource-type { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; margin-top: 2px; }
+  .type-article { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-border); }
+  .type-video { background: rgba(240,112,96,0.1); color: #f07060; border: 1px solid rgba(240,112,96,0.25); }
+  .type-book { background: var(--blue-dim); color: var(--blue); border: 1px solid var(--blue-border); }
+  .resource-content {}
+  .resource-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+  .resource-sub { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .resource-author { font-family: var(--mono); font-size: 10px; color: #444; margin-top: 4px; }
+  .inline-link { display: inline-block; font-family: var(--mono); font-size: 11px; color: var(--purple); text-decoration: none; margin-top: 8px; letter-spacing: 0.03em; padding: 3px 0; border-bottom: 1px solid rgba(167,139,250,0.25); transition: border-color 0.15s; }
+  .inline-link:hover { border-color: var(--purple); }
+  .inline-links { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+
+  /* CTA to tools */
+  .tools-cta { background: var(--accent-dim); border: 1px solid var(--accent-border); border-radius: 16px; padding: 28px 32px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .tools-cta-text h3 { font-size: 18px; font-weight: 500; color: var(--accent); margin-bottom: 6px; }
+  .tools-cta-text p { font-size: 14px; color: rgba(200,240,96,0.65); margin: 0; line-height: 1.6; }
+  .tools-cta-btn { background: var(--accent); color: #0e0f11; border: none; border-radius: 10px; padding: 12px 24px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: var(--mono); text-decoration: none; white-space: nowrap; letter-spacing: 0.03em; transition: opacity 0.15s; }
+  .tools-cta-btn:hover { opacity: 0.88; }
+
+  footer { margin-top: 64px; font-size: 11px; font-family: var(--mono); letter-spacing: 0.05em; text-align: center; background: #0e0f11; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 16px 24px; display: inline-flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Test Right</a>
+  <a class="nav-back" href="index.html">← Back to toolkit</a>
+</nav>
+
+<div class="container">
+
+  <div class="hero">
+    <p class="eyebrow">Tool 00 — Start here</p>
+    <h1>Learn the <strong>what, why</strong><br>and how of experimentation.</h1>
+    <p class="hero-sub">Before you build an experiment, understand why it matters. This page covers the fundamentals — in plain English, no PhD required.</p>
+  </div>
+
+  <!-- What is experimentation -->
+  <div class="section">
+    <p class="section-label">What</p>
+    <h2>What is experimentation?</h2>
+    <p>An experiment is a <strong>controlled way to test whether a change causes an improvement</strong> — not just correlates with one. That distinction matters more than almost anything else in data science.</p>
+    <p>Here's the problem with just looking at data: if sales go up after you launch a new feature, did the feature cause it? Or was it a holiday? A competitor going down? Seasonal trends? Without an experiment, you genuinely cannot tell.</p>
+    <p>An experiment solves this by <strong>randomly splitting your users</strong> into two groups — one sees the change (treatment), one doesn't (control). Because the split is random, both groups are essentially identical. Any difference in outcome between them can only be explained by the change you made. That's causation, not correlation.</p>
+    <p>The math then tells you whether the difference you observed is <strong>real or just luck</strong>. That's what statistical significance means — not that the result is important, but that it's unlikely to have happened by chance.</p>
+    <div class="inline-links">
+      <a class="inline-link" href="https://www.youtube.com/watch?v=zFMgpxG-chM" target="_blank">▶ Watch: A/B Testing Simply Explained — StatQuest (12 min)</a>
+      <a class="inline-link" href="https://www.evanmiller.org/how-not-to-run-an-ab-test.html" target="_blank">→ Read: How Not to Run an A/B Test — Evan Miller</a>
+    </div>
+  </div>
+
+  <!-- Why -->
+  <div class="section">
+    <p class="section-label">Why</p>
+    <h2>Why do companies run experiments?</h2>
+    <p>Because <strong>most ideas fail</strong>. Not 10% of ideas — most. At Amazon, Microsoft, and Google, internal studies suggest that only 10–30% of experiments show a positive effect. The rest are neutral or harmful.</p>
+    <p>That sounds discouraging. It's actually the point. Experimentation is how you find the 20% that works <strong>before</strong> you ship it to everyone. Without experiments, companies ship everything and hope. With experiments, they only ship what they know works.</p>
+    <p>The compounding effect is enormous. Amazon runs over 10,000 experiments a year. Each one that works makes their product incrementally better. Over a decade, that's thousands of validated improvements — none of which would have been possible without a system for being right more often than they're wrong.</p>
+    <p>For you personally: the ability to design, run, and interpret experiments is one of the <strong>highest-leverage skills</strong> in modern data science. It's what separates analysts who describe what happened from scientists who determine what caused it.</p>
+    <div class="inline-links">
+      <a class="inline-link" href="https://netflixtechblog.com/its-all-a-bout-testing-the-netflix-experimentation-platform-4e1ca458c15b" target="_blank">→ Read: It's All A/Bout Testing — Netflix Tech Blog</a>
+      <a class="inline-link" href="https://www.youtube.com/watch?v=0zD7K4IK5EM" target="_blank">▶ Watch: Experimentation at Scale — Booking.com (30 min)</a>
+    </div>
+  </div>
+
+  <!-- How -->
+  <div class="section">
+    <p class="section-label">How</p>
+    <h2>How does an experiment work?</h2>
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <div class="step-content">
+          <div class="step-title">Form a hypothesis</div>
+          <div class="step-desc">State clearly what you believe will happen and why. "If we show users X, then metric Y will improve, because Z." Vague hypotheses produce uninterpretable results.</div>
+          <a class="inline-link" href="https://experimentguide.com" target="_blank" style="margin-top:8px;">→ Read: Trustworthy Online Controlled Experiments — experimentguide.com</a>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">02</span>
+        <div class="step-content">
+          <div class="step-title">Pick the right method</div>
+          <div class="step-desc">Can you randomize? Do you have pre-treatment data? How large is your sample? The answers determine whether you run an A/B test, a DiD, a Synthetic Control, or something else.</div>
+          <a class="step-link" href="find-test.html">→ Use Tool 01 to find your method</a>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">03</span>
+        <div class="step-content">
+          <div class="step-title">Calculate how many users you need</div>
+          <div class="step-desc">Running a test too short means you might miss a real effect. Running it too long wastes time and money. Sample size calculation tells you exactly how many users you need before you start.</div>
+          <a class="step-link" href="sample-size.html">→ Use Tool 02 to calculate sample size</a>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">04</span>
+        <div class="step-content">
+          <div class="step-title">Validate randomization before trusting results</div>
+          <div class="step-desc">Sample Ratio Mismatch (SRM) is when your actual split doesn't match your intended split. It silently corrupts results and is more common than you'd think. Always check before analyzing.</div>
+          <a class="step-link" href="srm.html">→ Use Tool 03 to check your split</a>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">05</span>
+        <div class="step-content">
+          <div class="step-title">Analyze results</div>
+          <div class="step-desc">Did the change work? By how much? Is the result statistically significant? What's the confidence interval? These questions have precise answers — not vibes.</div>
+          <a class="step-link" href="stat-sig.html">→ Use Tool 04 to check significance</a>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">06</span>
+        <div class="step-content">
+          <div class="step-title">Present your findings</div>
+          <div class="step-desc">A great experiment with a bad readout doesn't get shipped. Your job isn't done when the analysis is done — it's done when the decision is made. Clear communication is part of the science.</div>
+        </div>
+      </div>
+    </div>
+    <div class="inline-links" style="margin-top:16px;">
+      <a class="inline-link" href="https://www.youtube.com/playlist?list=PL2yD6frXhFob97PFpMmJFhFBPAJMxLi4Y" target="_blank">▶ Watch: Introduction to Causal Inference — Brady Neal (full course, free)</a>
+    </div>
+  </div>
+
+  <!-- Resources -->
+  <div class="section">
+    <p class="section-label">Resources</p>
+    <h2>Curated reading & watching</h2>
+    <div class="resources">
+
+      <a class="resource" href="https://www.evanmiller.org/how-not-to-run-an-ab-test.html" target="_blank">
+        <span class="resource-type type-article">Article</span>
+        <div class="resource-content">
+          <div class="resource-title">How Not to Run an A/B Test</div>
+          <div class="resource-sub">The most-read article in experimentation. Explains why peeking at results early destroys your false positive rate — and what to do instead.</div>
+          <div class="resource-author">Evan Miller · evanmiller.org · Free</div>
+        </div>
+      </a>
+
+      <a class="resource" href="https://netflixtechblog.com/its-all-a-bout-testing-the-netflix-experimentation-platform-4e1ca458c15b" target="_blank">
+        <span class="resource-type type-article">Article</span>
+        <div class="resource-content">
+          <div class="resource-title">It's All A/Bout Testing — Netflix Experimentation Platform</div>
+          <div class="resource-sub">How Netflix built a culture and infrastructure around experimentation at scale. The real-world context that makes the theory click.</div>
+          <div class="resource-author">Netflix Tech Blog · Free</div>
+        </div>
+      </a>
+
+      <a class="resource" href="https://www.youtube.com/watch?v=zFMgpxG-chM" target="_blank">
+        <span class="resource-type type-video">Video</span>
+        <div class="resource-content">
+          <div class="resource-title">A/B Testing — Simply Explained</div>
+          <div class="resource-sub">The clearest plain-English explanation of A/B testing you'll find. No jargon, no assumed knowledge. Watch this first.</div>
+          <div class="resource-author">StatQuest with Josh Starmer · YouTube · 12 min · Free</div>
+        </div>
+      </a>
+
+      <a class="resource" href="https://www.youtube.com/watch?v=0zD7K4IK5EM" target="_blank">
+        <span class="resource-type type-video">Video</span>
+        <div class="resource-content">
+          <div class="resource-title">Experimentation at Scale — Booking.com</div>
+          <div class="resource-sub">Lukas Vermeer on how Booking.com built experimentation into the DNA of their company. Practitioner perspective, very honest about what goes wrong.</div>
+          <div class="resource-author">Lukas Vermeer · YouTube · 30 min · Free</div>
+        </div>
+      </a>
+
+      <a class="resource" href="https://experimentguide.com" target="_blank">
+        <span class="resource-type type-article">Article</span>
+        <div class="resource-content">
+          <div class="resource-title">Trustworthy Online Controlled Experiments — Online Guide</div>
+          <div class="resource-sub">Free companion to the definitive book on experimentation by Microsoft researchers. Covers everything from SRM to long-term effects. Bookmark this.</div>
+          <div class="resource-author">Ron Kohavi, Diane Tang, Ya Xu · experimentguide.com · Free</div>
+        </div>
+      </a>
+
+      <a class="resource" href="https://www.youtube.com/playlist?list=PL2yD6frXhFob97PFpMmJFhFBPAJMxLi4Y" target="_blank">
+        <span class="resource-type type-video">Video</span>
+        <div class="resource-content">
+          <div class="resource-title">Introduction to Causal Inference — Full Course</div>
+          <div class="resource-sub">When you're ready to go beyond A/B tests. Brady Neal's free course on causal inference — the foundation of DiD, Synthetic Control, and why randomization matters.</div>
+          <div class="resource-author">Brady Neal · YouTube Playlist · Free</div>
+        </div>
+      </a>
+
+      <a class="resource" href="https://www.cambridge.org/core/books/trustworthy-online-controlled-experiments/D97B26382EB0EB2DC2019A7A7B518F59" target="_blank">
+        <span class="resource-type type-book">Book</span>
+        <div class="resource-content">
+          <div class="resource-title">Trustworthy Online Controlled Experiments</div>
+          <div class="resource-sub">The definitive book on A/B testing in industry. Written by researchers at Microsoft, Google, and LinkedIn. If you read one book on experimentation, make it this one.</div>
+          <div class="resource-author">Kohavi, Tang, Xu · Cambridge University Press</div>
+        </div>
+      </a>
+
+      <a class="resource" href="https://www.basicbooks.com/titles/judea-pearl/the-book-of-why/9780465097616/" target="_blank">
+        <span class="resource-type type-book">Book</span>
+        <div class="resource-content">
+          <div class="resource-title">The Book of Why</div>
+          <div class="resource-sub">Judea Pearl on causal thinking — why correlation isn't causation and how to think about cause and effect. Surprisingly readable for non-statisticians.</div>
+          <div class="resource-author">Judea Pearl · Basic Books</div>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="tools-cta">
+    <div class="tools-cta-text">
+      <h3>Ready to build your first experiment?</h3>
+      <p>Start with Tool 01 — answer 5 questions and get your top 3 recommended testing methodologies.</p>
+    </div>
+    <a class="tools-cta-btn" href="find-test.html">Find my test →</a>
+  </div>
+
+</div>
+
+<footer>
+  <span style="color:#85b7eb;">Test Right</span>
+  <span style="color:#444;">·</span>
+  <span style="color:#c9b8fa;">Experimentation Toolkit</span>
+  <span style="color:#444;">·</span>
+  <span style="color:#6a9a7a;">Designed &amp; built by Atul Kabra</span>
+</footer>
+
+</body>
+</html>

@@ -17,25 +17,25 @@
     --amber: #f0c060; --amber-dim: rgba(240,192,96,0.1); --amber-border: rgba(240,192,96,0.25);
     --mono: 'DM Mono', monospace; --sans: 'DM Sans', sans-serif;
   }
-  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 300; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 36px 24px 60px; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 300; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 48px 24px 48px; }
 
-  nav { width: 100%; max-width: 1100px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 36px; margin-top: -20px; }
+  nav { width: 100%; max-width: 1100px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0; margin-top: 0; }
   .nav-logo { font-family: var(--mono); font-size: 13px; color: #85b7eb; letter-spacing: 0.08em; }
   .nav-tag { font-family: var(--mono); font-size: 11px; color: #c9b8fa; letter-spacing: 0.06em; }
 
-  .hero { text-align: center; max-width: 560px; margin-bottom: 36px; }
-  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
-  h1 { font-size: clamp(28px, 3.5vw, 48px); font-weight: 300; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 10px; white-space: nowrap; }
+  .hero { text-align: center; max-width: 560px; margin-bottom: 2px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; }
+  h1 { font-size: clamp(22px, 3vw, 36px); font-weight: 300; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 6px; white-space: nowrap; }
   h1 strong { font-weight: 500; }
-  .hero-sub { font-size: 17px; color: #6a9a7a; line-height: 1.7; max-width: 800px; margin: 0 auto; white-space: nowrap; }
+  .hero-sub { font-size: 13px; color: #6a9a7a; line-height: 1.7; max-width: 800px; margin: 0 auto; white-space: nowrap; }
 
-  .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 1100px; }
+  .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 1100px; }
   @media (max-width: 580px) { .tools { grid-template-columns: 1fr; } }
 
   .tool-card {
     background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
-    padding: 34px 34px; cursor: pointer; text-decoration: none; color: inherit;
-    display: flex; flex-direction: column; gap: 20px;
+    padding: 20px 22px; cursor: pointer; text-decoration: none; color: inherit;
+    display: flex; flex-direction: column; gap: 10px;
     transition: border-color 0.2s, background 0.2s;
     position: relative; overflow: hidden;
   }
@@ -44,12 +44,12 @@
   .tool-card.blue-card:hover { border-color: var(--blue-border); }
 
   .tool-icon { font-size: 16px; flex-shrink: 0; }
-  .card-top { display: flex; align-items: center; gap: 20px; }
+  .card-top { display: flex; align-items: center; gap: 10px; }
   .tool-meta {}
   .tool-tag { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
   .accent-card .tool-tag { color: var(--accent); }
   .blue-card .tool-tag { color: var(--blue); }
-  .tool-name { font-size: 24px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.2; color: var(--text); }
+  .tool-name { font-size: 18px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.2; color: var(--text); }
   .tool-desc { font-size: 12px; color: var(--muted); line-height: 1.55; }
 
   .tool-pills { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -77,7 +77,36 @@
   .stat-num { font-family: var(--mono); font-size: 28px; font-weight: 500; color: var(--accent); }
   .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; font-family: var(--mono); letter-spacing: 0.04em; }
 
-  footer { margin-top: 80px; font-size: 11px; font-family: var(--mono); letter-spacing: 0.05em; text-align: center; background: #0e0f11; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 16px 24px; display: inline-flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
+
+  .banner {
+    grid-column: 1 / -1;
+    background: #13111a;
+    border: 1px solid rgba(167,139,250,0.25);
+    border-radius: 18px;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.18s;
+    flex-wrap: wrap;
+  }
+  .banner:hover { border-color: rgba(167,139,250,0.5); }
+  .banner-left { display: flex; align-items: center; gap: 18px; }
+  .banner-icon { font-size: 22px; flex-shrink: 0; }
+  .banner-tag { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--purple); margin-bottom: 6px; }
+  .banner-title { font-size: 16px; font-weight: 500; color: #f0f0ee; margin-bottom: 3px; font-family: var(--sans); }
+  .banner-sub { font-size: 13px; color: #555; line-height: 1.55; }
+  .banner-sub span { color: var(--purple); }
+  .banner-right { flex-shrink: 0; text-align: right; }
+  .banner-cta { font-family: var(--mono); font-size: 12px; color: var(--purple); letter-spacing: 0.04em; white-space: nowrap; }
+  .banner-pills { display: flex; gap: 6px; margin-top: 8px; justify-content: flex-end; flex-wrap: wrap; }
+  .b-pill { font-size: 9px; padding: 2px 8px; border-radius: 4px; background: rgba(167,139,250,0.08); color: var(--purple); border: 1px solid rgba(167,139,250,0.2); white-space: nowrap; font-family: var(--mono); letter-spacing: 0.04em; }
+
+  footer { margin-top: 0; font-size: 11px; font-family: var(--mono); letter-spacing: 0.05em; text-align: center; background: #0e0f11; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 16px 24px; display: inline-flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
 </style>
 </head>
 <body>
@@ -92,7 +121,26 @@
   <p class="hero-sub">Because 'looks significant' isn't a methodology.</p>
 </div>
 
-<div class="tools" style="grid-template-columns: repeat(3, 1fr);">
+<div class="tools" style="grid-template-columns: repeat(3, 1fr); margin-top: 0; margin-bottom: 0;">
+
+  <a class="banner" href="learn.html">
+    <div class="banner-left">
+      <span class="banner-icon">🎓</span>
+      <div>
+        <div class="banner-tag">Tool 00 — Start here</div>
+        <div class="banner-title">Yet to run your first experiment?</div>
+        <div class="banner-sub">Learn the <span>what, why and how</span> of experimentation — before you build one.</div>
+      </div>
+    </div>
+    <div class="banner-right">
+      <div class="banner-cta">Start learning →</div>
+      <div class="banner-pills">
+        <span class="b-pill">What is an A/B test</span>
+        <span class="b-pill">Why randomize</span>
+        <span class="b-pill">Curated resources</span>
+      </div>
+    </div>
+  </a>
 
   <a class="tool-card purple-card" href="find-test.html">
     <div class="card-top">
@@ -154,12 +202,16 @@
     <div class="tool-cta">Open monitor <span class="arrow">→</span></div>
   </a>
 
-  <div class="tool-card-placeholder">
-    <div style="text-align:center;">
-      <div style="font-size:20px;margin-bottom:8px;opacity:0.25;">+</div>
-      <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#333;">Coming soon</div>
-      <div style="font-size:12px;color:#2a2a2a;margin-top:4px;font-family:var(--mono);">Readout Reviewer</div>
+  <div class="tool-card c6" style="background:#171210;border:1px solid rgba(240,112,96,0.18);border-radius:18px;padding:20px 22px;display:flex;flex-direction:column;gap:10px;">
+    <div class="card-top" style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:24px;">📋</span>
+      <div>
+        <p class="tool-tag" style="color:#f07060;">Tool 06 <span style="font-size:8px;padding:1px 6px;border-radius:3px;background:rgba(240,112,96,0.1);color:#f07060;border:1px solid rgba(240,112,96,0.2);margin-left:4px;font-family:var(--mono);letter-spacing:0.06em;">SOON</span></p>
+        <h2 class="tool-name" style="color:#f07060;font-size:18px;">Readout Reviewer</h2>
+      </div>
     </div>
+    <p class="tool-desc">Upload your test readout. AI feedback on clarity, acronyms, and data consistency.</p>
+    <div class="tool-cta" style="color:#333;">Coming soon</div>
   </div>
 
 </div>
