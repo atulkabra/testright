@@ -482,5 +482,28 @@ function copyResults() {
 <div id="tt-popup"><div class="tt-title" id="tt-title"></div><div class="tt-body" id="tt-body"></div></div>
 
 
+
+<script>
+(function(){
+  const pop = document.getElementById('tt-popup');
+  if (!pop) return;
+  const ttTitle = document.getElementById('tt-title');
+  const ttBody = document.getElementById('tt-body');
+  document.querySelectorAll('.tip').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      ttTitle.textContent = el.dataset.title || '';
+      ttBody.textContent = el.dataset.tip || '';
+      pop.style.display = 'block';
+      const r = el.getBoundingClientRect();
+      let left = r.left + window.scrollX;
+      let top = r.bottom + window.scrollY + 8;
+      if (left + 260 > window.innerWidth) left = window.innerWidth - 265;
+      pop.style.left = left + 'px';
+      pop.style.top = top + 'px';
+    });
+    el.addEventListener('mouseleave', () => { pop.style.display = 'none'; });
+  });
+})();
+</script>
 </body>
 </html>
